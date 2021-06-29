@@ -1,0 +1,7 @@
+Description on source files:
+
+  accell_embree.* - handles Embree API
+  rkf45.* - contains the OO RKF45 implementation
+  flt.* - the kernel, takes the equilibrium data and contains functions for FLT
+  alglib/* - 3rd party dependency, used for interpolation methods
+

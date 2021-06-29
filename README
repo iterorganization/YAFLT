@@ -1,0 +1,8 @@
+README:
+
+Debug build CMake:
+cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug /path/to/source
+
+Additional support for LSP clangd:
+
+compdb -p /path/to/build/ list > /path/to/source/compile_commands.json

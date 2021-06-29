@@ -1,0 +1,21 @@
+Examples directory
+******************
+
+flt1:
+
+Example of using the library with pre-defined equilibrium data from EQ3.eqdsk
+and obtaining a fieldline from a given starting point.
+
+
+flt2:
+
+Example of using the library with pre-defined equilibrium data from EQ3.eqdsk
+and the pre-defined target mesh from inres1 and calculating fieldlines from
+the barycenters of the triangles from the mesh.
+
+flt3:
+
+Same as flt2, except that in this case, based on the input normals we
+correctly determine the direction we should follow the fieldlines and
+calculating the magnetic vector from the given EQ3.eqdsk data set in Cartesian
+coordinate system.
