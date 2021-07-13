@@ -40,6 +40,24 @@ private:
     /// one make pairs for every value in one array with the values of the other
     /// array. Or a meshgrid.
     std::vector<double> m_r_points;
+
+    /// Left border of major radius R value that defines the computation
+    /// domain. Along with m_r_max, m_z_min and m_z_max this is used to catch
+    /// FLs that might escape the tokamak area. The values are set when the
+    /// R and Z points are delivered via setRARR and setZARR methods. In
+    /// meters.
+    double m_r_min=3.0;
+    /// Right border of major radius R value that defines the computation
+    /// domain. In meters.
+    double m_r_max=9.0;
+
+    /// Bottom border of the Z value that defines the computation domain. In
+    /// meters.
+    double m_z_min=-6.0;
+    /// Top border of the Z value that defines the computation domain. In
+    /// meters.
+    double m_z_max=6.0;
+
     /// Array of Z points, describing the vertical coordinates in unit of
     /// meter.\n
     /// Together the R and Z points create the (R, Z) plane in units (m, m) if

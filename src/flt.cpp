@@ -82,12 +82,17 @@ void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){
 void FLT::setRARR(std::vector<double> r){
     // Sets the radial points in meters with size NDIMR.
     m_r_points = r;
+
+    m_r_min = r[0];
+    m_r_max = r[r.size() - 1];
     assert(("Number of elements in m_r_points is not the same as m_NDIMR", \
             m_r_points.size() == m_NDIMR));
 }
 void FLT::setZARR(std::vector<double> z){
     // Sets the vertical points in meters with size NDIMZ.
     m_z_points = z;
+    m_z_min = z[0];
+    m_z_max = z[z.size() - 1];
     assert(("Number of elements in m_z_points is not the same as m_NDIMZ", \
             m_z_points.size() == m_NDIMZ));
 }
@@ -320,6 +325,7 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             flag = 2; // Until we find an actual problem, ignore messages from
                       // rkf45 as they do not indicate a problem
         }
+
         // Check for intersection
         // calculate end of field-line segment for the current step
         x1 = y[0] * cos(t_offset + t);
@@ -351,7 +357,19 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             m_embree_obj->castRay(ox, oy, oz, dx, dy, dz, tnear, tfar,
                                       omp_thread);
             intersect = m_embree_obj->checkIfHit(omp_thread);
+            // Check if point is outside the computation domain
+            if (y[0] < m_r_min || y[0] > m_r_max){
+                // For now treat this as an intersect.
+                intersect = true;
+                continue;
+            }
+            if (y[0] < m_z_min || y[1] > m_z_max){
+                // For now treat this as an intersect.
+                intersect = true;
+                continue;
+            }
         }
+
     }
 
 }
@@ -471,7 +489,6 @@ void FLT::runFLT(int omp_thread){
         oy = y[0] * sin(t_offset + t);
         oz = y[1];
         new_time = t + t_step;
-
         while (0 < (new_time - t) * direction){
             flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
                                                         new_time, &relerr,
@@ -504,6 +521,18 @@ void FLT::runFLT(int omp_thread){
         m_embree_obj->castRay(ox, oy, oz, dx, dy, dz, tnear, tfar,
                                       omp_thread);
         intersect = m_embree_obj->checkIfHit(omp_thread);
+
+        // Check if point is outside the computation domain
+        if (y[0] < m_r_min || y[0] > m_r_max){
+            // For now treat this as an intersect.
+            intersect = true;
+            continue;
+        }
+        if (y[0] < m_z_min || y[1] > m_z_max){
+            // For now treat this as an intersect.
+            intersect = true;
+            continue;
+        }
     }
     m_hits[omp_thread] = intersect;
     m_conlens[omp_thread] = state_data[BY_LENGTH];
