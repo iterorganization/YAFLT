@@ -303,7 +303,7 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             dx = (x1-ox);
             dy = (y1-oy);
             dz = (z1-oz);
-            norm = sqrt(pow(dx, 2.0) + pow(dy, 2.0) + pow(dz, 2.0));
+            norm = sqrt(dx * dx + dy * dy + dz * dz);
             dx = dx / norm;
             dy = dy / norm;
             dz = dz / norm;
@@ -337,7 +337,7 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
         dx = (x1-ox);
         dy = (y1-oy);
         dz = (z1-oz);
-        norm = sqrt(pow(dx, 2.0) + pow(dy, 2.0) + pow(dz, 2.0));
+        norm = sqrt(dx * dx + dy * dy + dz * dz);
         dx = dx / norm;
         dy = dy / norm;
         dz = dz / norm;
@@ -478,7 +478,7 @@ void FLT::runFLT(int omp_thread){
         dx = (x1-ox);
         dy = (y1-oy);
         dz = (z1-oz);
-        norm = sqrt(pow(dx, 2.0) + pow(dy, 2.0) + pow(dz, 2.0));
+        norm = sqrt(dx * dx + dy * dy + dz * dz);
 
         state_data[BY_LENGTH] = state_data[BY_LENGTH] + norm;
         state_data[BY_TIME] = t * direction;
@@ -507,7 +507,7 @@ void FLT::runFLT(int omp_thread){
         dx = (x1-ox);
         dy = (y1-oy);
         dz = (z1-oz);
-        norm = sqrt(pow(dx, 2.0) + pow(dy, 2.0) + pow(dz, 2.0));
+        norm = sqrt(dx * dx + dy * dy + dz * dz);
         dx = dx / norm;
         dy = dy / norm;
         dz = dz / norm;
