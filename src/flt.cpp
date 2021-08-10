@@ -363,7 +363,7 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
                 intersect = true;
                 continue;
             }
-            if (y[0] < m_z_min || y[1] > m_z_max){
+            if (y[1] < m_z_min || y[1] > m_z_max){
                 // For now treat this as an intersect.
                 intersect = true;
                 continue;
@@ -528,7 +528,7 @@ void FLT::runFLT(int omp_thread){
             intersect = true;
             continue;
         }
-        if (y[0] < m_z_min || y[1] > m_z_max){
+        if (y[1] < m_z_min || y[1] > m_z_max){
             // For now treat this as an intersect.
             intersect = true;
             continue;
