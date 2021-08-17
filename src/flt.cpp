@@ -44,7 +44,7 @@ void FLT::prepareThreadContainers(int num_threads){
     m_hits.clear();
     m_conlens.clear();
     m_initial_y.clear();
-    m_current_y.clear();
+    m_geom_hit_ids.clear();
     m_directions.clear();
 
     for(int i=0; i < num_threads; i++){
@@ -54,9 +54,7 @@ void FLT::prepareThreadContainers(int num_threads){
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
-        m_current_y.push_back(0.0);
-        m_current_y.push_back(0.0);
-        m_current_y.push_back(0.0);
+        m_geom_hit_ids.push_back(-3);
         m_directions.push_back(1);
     }
 
@@ -442,7 +440,7 @@ void FLT::runFLT(int omp_thread){
 
     // FLT values
     double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz, tnear, tfar;
-    bool intersect=false;
+    bool intersect=false, left_computational_domain=false;
 
     // Flag=1 means solver will run until end time. If Flag=-1 then solver
     // solves in singular steps where the user can check values.
@@ -524,22 +522,41 @@ void FLT::runFLT(int omp_thread){
 
         // Check if point is outside the computation domain
         if (y[0] < m_r_min || y[0] > m_r_max){
-            // For now treat this as an intersect.
+            // For now treat this as an intersect. Artificial FLs that escapes
+            // the tokamak usually happens on the parts of the target geometry
+            // which is the farthest away from the plasma center (i.e., edges
+            // spreading far away from the center).
             intersect = true;
+            left_computational_domain = true;
+            // Set the geom hit id to -2
+            m_geom_hit_ids[omp_thread] = -2;
             continue;
         }
         if (y[1] < m_z_min || y[1] > m_z_max){
             // For now treat this as an intersect.
             intersect = true;
+            left_computational_domain = true;
+            // Set the geom hit id to -2
+            m_geom_hit_ids[omp_thread] = -2;
             continue;
         }
     }
     m_hits[omp_thread] = intersect;
+
+    /// Register which geometry was hit.
+    if (intersect){
+        if (!left_computational_domain){
+            m_geom_hit_ids[omp_thread] = m_embree_obj->returnGeomId(omp_thread);
+        }
+    }
+    else {
+        /// Since there was no hit, then we set the geomId to -1, meaning the
+        /// FL has been followed to the end of it's toroidal time or maximum
+        /// connection length. In case the FL leaves the computational domain
+        /// this is already taken care of.
+        m_geom_hit_ids[omp_thread] = -1;
+    }
     m_conlens[omp_thread] = state_data[BY_LENGTH];
-    // Save current position of fieldline if we wish to continue running FLT
-    m_current_y[3 * omp_thread] = y[0];
-    m_current_y[3 * omp_thread + 1] = y[1];
-    m_current_y[3 * omp_thread + 2] = t_offset + t;
 }
 
 void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){

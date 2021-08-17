@@ -231,3 +231,7 @@ bool EmbreeAccell::checkIfHit(int omp_thread){
     }
     return false;
 }
+
+int EmbreeAccell::returnGeomId(int omp_thread){
+    return (int) m_listRayHit[omp_thread].hit.geomID;
+}

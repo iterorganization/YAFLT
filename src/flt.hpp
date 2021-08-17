@@ -238,9 +238,18 @@ public:
     /// of size 1.
     std::vector<double> m_conlens;
 
-    /// Current position of FLs. Used in case we wish to continue FLT from
-    /// current state.
-    std::vector<double> m_current_y;
+    /// m_geom_hit_ids tells us which geometry, an integer registered by embree
+    /// when commiting a geometry to it's shadowing structure. Since the
+    /// geometry ID's in Embree are non-negative, the negative values tells us
+    /// the following:
+    /// -1 : Connection length has reached it's end toroidal time or the
+    ///      maximum connection length
+    /// -2 : The FL has left the computational RZ domain, defined in the
+    ///      equilibrium. Since interpolation is used, there is no use to
+    ///      follow FLs outside the interpolation area, as extrapolation would
+    ///      be required
+    /// -3 : The FL wasn't followed at all, i.e., the initialized value
+    std::vector<int> m_geom_hit_ids;
 
     /// Derivative function for the RKF45 object. Since the FL are traced in the
     /// parametric time or toroidal angle, the values stored in the derivative
