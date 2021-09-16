@@ -20,6 +20,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 3rd party dependencies
 find_package(embree 3.3.0 REQUIRED)
+find_package(Doxygen)
 
 # Options
 option(FLT_BUILD_EXAMPLES "Build examples" ON)
@@ -31,3 +32,24 @@ add_subdirectory(src)
 if(FLT_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
+
+# Documentation
+if(DOXYGEN_FOUND)
+    message("-- Doxygen found. Documentation will be built")
+    set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/doc/Doxyfile.in)
+    set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+    message("-- Configuring Doxyfile")
+    # request to configure the file
+    configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+    message("-- Doxygen build started")
+
+    add_custom_target(doc_doxygen ALL
+        COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        COMMENT "Generating Documentation with Doxygen"
+        VERBATIM)
+    install(DIRECTORY
+        ${CMAKE_CURRENT_BINARY_DIR}/doc_doxygen/html DESTINATION share/doc)
+else(DOXYGEN_FOUND)
+    message("-- Doxygen not found. Documentation will not be generated.")
+endif(DOXYGEN_FOUND)

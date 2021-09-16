@@ -23,17 +23,19 @@ void FLT::prepareThreadContainers(int num_threads){
     //
     // In essence create a copy of a local variable for each thread.
     //
-    // Allocates the following variables:
-    //     RKF45 solver - This class has some state variables needed for
-    //         successful solving, therefore each thread needs to have one
-    //     bool intersection - This holds the information on whether the FLT
-    //         detected a hit of the FL.
-    //     double conlen - This holds the information on the connection length of
-    //         the FLT.
-    //     vector<double> IV - initial value vector of 3 doubles.
-    //     double timeStop - End of toroidal (angle) time
-    //     double timeStep - The time resolution at which we wish to obtain
-    //         results
+    // Allocates the following variables. Note; every mentioned variable is a
+    // vector:
+    //     RKF45 m_rkf45_solvers - This class has some state variables needed
+    //         for successful solving, therefore each thread needs to have one.
+    //     bool m_hits - This holds the information on whether the FLT detected
+    //         a hit of the FL.
+    //     double m_conlens - This holds the information on the connection
+    //         length of the FLT.
+    //     double m_initial_y - initial value vector of 3*num_threads doubles.
+    //     int m_geom_hit_ids - Holds information about which geometry
+    //          was intersected. Negative value denotes that nothing was hit.
+    //     int m_directions - Tells the solver in which toroidal direction to
+    //          follow FL.
     //
     // After clearing the vectors, populate with a default value or object.
     //
@@ -192,7 +194,8 @@ void FLT::r8_flt(double t, double y[2], double yp[2]){
     double derivFluxdX, derivFluxdY, factor;
 
     spline2ddiff(m_interp_psi, y[0] - m_r_move, y[1] - m_z_move, factor,
-                 derivFluxdX, derivFluxdY, factor);
+                 derivFluxdX, derivFluxdY, factor); // factor here is a dummy
+                                                    // storage
     factor = y[0] / m_vacuum_fpol;
     yp[0] = - derivFluxdY * factor;
     yp[1] =   derivFluxdX * factor;
@@ -543,20 +546,36 @@ void FLT::runFLT(int omp_thread){
     }
     m_hits[omp_thread] = intersect;
 
-    /// Register which geometry was hit.
+    // Register which geometry was hit.
     if (intersect){
         if (!left_computational_domain){
             m_geom_hit_ids[omp_thread] = m_embree_obj->returnGeomId(omp_thread);
         }
     }
     else {
-        /// Since there was no hit, then we set the geomId to -1, meaning the
-        /// FL has been followed to the end of it's toroidal time or maximum
-        /// connection length. In case the FL leaves the computational domain
-        /// this is already taken care of.
+        // Since there was no hit, then we set the geomId to -1, meaning the
+        // FL has been followed to the end of it's toroidal time or maximum
+        // connection length. In case the FL leaves the computational domain
+        // this is already taken care of.
         m_geom_hit_ids[omp_thread] = -1;
     }
     m_conlens[omp_thread] = state_data[BY_LENGTH];
+}
+
+void FLT::getBCyln(double r, double z, std::vector<double> &out){
+    // Get the poloidal and toroidal component of the magnetic vector in
+    // Cylindrical coordinate system at point P(r, z, phi).
+
+    // Poloidal component is calculated as the sqrt of sum of squares of the
+    // derivatives of the Flux in (R, Z) space.
+
+    double derivFluxdR, derivFluxdZ, dummy;
+
+    spline2ddiff(m_interp_psi, r - m_r_move, z - m_z_move, dummy, derivFluxdR,
+                 derivFluxdZ, dummy); // Bphi here is a dummy storage
+
+    out[0] = sqrt(derivFluxdZ * derivFluxdZ + derivFluxdR + derivFluxdR) / r;
+    out[1] = m_vacuum_fpol / r; // Bphi
 }
 
 void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
@@ -574,11 +593,10 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
     //    0     |    0     | 1
     //
     // Phi is taken from the physical point where we wish to calculate the BCart.
-    std::vector<double> magVec;
     double derivFluxdR, derivFluxdZ, bphi, br, bz;
 
     spline2ddiff(m_interp_psi, r - m_r_move, z - m_z_move, bphi, derivFluxdR,
-                 derivFluxdZ, bphi); // Bphi here is a dummy value
+                 derivFluxdZ, bphi); // Bphi here is a dummy storage
 
 
     br = -derivFluxdZ / r;
@@ -587,7 +605,7 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
 
     out[0] = br * cos(phi) - sin(phi) * bphi;
     out[1] = br * sin(phi) + cos(phi) * bphi;
-    out[2] =bz;
+    out[2] = bz;
     // magVec.push_back(br * cos(phi) - sin(phi) * bphi);
     // magVec.push_back(br * sin(phi) + cos(phi) * bphi);
     // magVec.push_back(bz);

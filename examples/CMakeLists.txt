@@ -1,5 +1,5 @@
 # add the executable
-foreach(target flt1 flt2 flt3 embreeTest1)
+foreach(target flt1 flt2 flt3 embreeTest1 embreeTest2 inres1_example)
     add_executable(${target} ${PROJECT_SOURCE_DIR}/examples/${target}.cpp)
     target_link_libraries(${target} flt_static)
 

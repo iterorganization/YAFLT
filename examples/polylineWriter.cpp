@@ -100,7 +100,67 @@ void writeTri2VTK(double p1[3], double p2[3], double p3[3], std::string filePath
     outFile.close();
 }
 
-void writePolyData2VTK(){
-    /*TODO*/
-    return;
+// Used by inres1_example
+void writePolyData2VTK(int n_p, std::vector<double> vx, std::vector<double> vy,
+    std::vector<double> vz, int n_t, std::vector<int> t0, std::vector<int> t1,
+    std::vector<int> t2, std::vector<double> conlen, std::vector<int> mask,
+    std::string filePath){
+
+    std::ofstream outFile;
+    outFile.open(filePath, std::ios::trunc);
+    outFile << "# vtk DataFile Version 2.0\n";
+    outFile << "comment\n";
+    outFile << "ASCII\n\n";
+    outFile << "DATASET UNSTRUCTURED_GRID\n";
+
+    outFile << "POINTS"
+          << std::setw(9)  << n_p << "  "
+          << " double\n";
+
+    for (int i=0; i<n_p;i++){
+        outFile << std::setw(12) << std::setprecision(10) << vx[i]  << "  "
+                << std::setw(12) << std::setprecision(10) << vy[i]  << "  "
+                << std::setw(12) << std::setprecision(10) << vz[i]  << "\n";
+    }
+
+    outFile << "\n";
+
+    outFile << "CELLS"
+          << std::setw(12)  << n_t  << "  "
+          << std::setw(12)  << n_t * 4  << "  " << "\n";
+    for ( int i = 0; i < n_t; i++ )
+    {
+    outFile << std::setw(12) << "3"
+            << std::setw(12) << t0[i] - 1  << " "
+            << std::setw(12) << t1[i] - 1 << " "
+            << std::setw(12) << t2[i] - 1 << "\n";
+    }
+
+    outFile << "\n";
+
+    outFile << "CELL_TYPES"
+          << std::setw(9)  << n_t  << "  " << "\n";
+    for ( int i = 0; i < n_t; i++ )
+    {
+        outFile << std::setw(12) << "5" << "\n";
+    }
+
+    outFile << "CELL_DATA" << std::setw(9) << n_t;
+    outFile << "SCALARS conlen float 1\n";
+    outFile << "LOOKUP_TABLE default\n";
+
+    for (int i =0; i < n_t; i++ )
+    {
+        outFile << std::setw(12) << conlen[i];
+    }
+
+    outFile << "SCALARS mask int 1\n";
+    outFile << "LOOKUP_TABLE default\n";
+    for (int i =0; i < n_t; i++ )
+    {
+        outFile << std::setw(12) << mask[i];
+    }
+
+    outFile.close();
+
 }
