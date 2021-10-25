@@ -508,6 +508,13 @@ void FLT::runFLT(int omp_thread){
 
         state_data[BY_LENGTH] = state_data[BY_LENGTH] + norm;
         state_data[BY_TIME] = t * direction;
+
+        // Instead of re-calculating the starting point of a FL, assign the end
+        // point from the current FL segment as the start point of the next
+        // FL segment. (To avoid re-computing it).
+        ox = x1;
+        oy = y1;
+        oz = z1;
     }
 
     // The starting point (ox, oy, oz) of the FL segment gets evaluated before
