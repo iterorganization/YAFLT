@@ -273,6 +273,12 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
     // solves in singular steps where the user can check values.
     flag = 1; // First time set the flag to 1
 
+    // Calculate the (X, Y, Z) starting point of a FL segment to avoid
+    // calculating it twice in the loop.
+    ox = y[0] * cos(t_offset);
+    oy = y[0] * sin(t_offset);
+    oz = y[1];
+
     if (with_flt){
         // For avoiding self-intersection test. Follow the FL for a small length
         // and then start from there. The value should be around 1 cm but not too
@@ -282,6 +288,8 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
         // major radius of the element and make sure that there are at least 2
         // steps between the origin point and the self avoiding intersection length
         pre_t_step = std::asin(0.1 * m_self_intersection_avoidance_length / y[0]) * direction;
+
+
 
         while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
             ox = y[0] * cos(t_offset + t);
@@ -310,13 +318,21 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             dz = dz / norm;
             state_data[BY_LENGTH] = state_data[BY_LENGTH] + norm;
             state_data[BY_TIME] = t * direction;
+
+        // Instead of re-calculating the starting point of a FL, assign the end
+        // point from the current FL segment as the start point of the next
+        // FL segment. (To avoid re-computing it).
+        ox = x1;
+        oy = y1;
+        oz = z1;
         }
     }
 
+    // The starting point (ox, oy, oz) of the FL segment gets evaluated before
+    // the above while block or inside the while block. So we do not have to
+    // write it again.
+
     while (state_data[option_index] < stop_data[option_index] && !intersect){
-        ox = y[0] * cos(t_offset + t);
-        oy = y[0] * sin(t_offset + t);
-        oz = y[1];
         new_time = t + t_step;
 
         while (0 < (new_time - t) * direction){
@@ -371,6 +387,12 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             }
         }
 
+        // Instead of re-calculating the starting point of a FL, assign the end
+        // point from the current FL segment as the start point of the next
+        // FL segment. (To avoid re-computing it).
+        ox = x1;
+        oy = y1;
+        oz = z1;
     }
 
 }
@@ -449,6 +471,12 @@ void FLT::runFLT(int omp_thread){
     // solves in singular steps where the user can check values.
     flag = 1; // First time set the flag to 1
 
+    // Calculate the (X, Y, Z) starting point of a FL segment to avoid
+    // calculating it twice in the loop.
+    ox = y[0] * cos(t_offset);
+    oy = y[0] * sin(t_offset);
+    oz = y[1];
+
     // For avoiding self-intersection test. Follow the FL for a small length
     // and then start from there. The value should be around 1 cm but not too
     // much.
@@ -458,9 +486,6 @@ void FLT::runFLT(int omp_thread){
     // steps between the origin point and the self avoiding intersection length
     pre_t_step = std::asin(0.1 * m_self_intersection_avoidance_length / y[0]) * direction;
     while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
-        ox = y[0] * cos(t_offset + t);
-        oy = y[0] * sin(t_offset + t);
-        oz = y[1];
         new_time = t + pre_t_step;
         while (0 < (new_time - t) * direction){
             flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
@@ -485,10 +510,11 @@ void FLT::runFLT(int omp_thread){
         state_data[BY_TIME] = t * direction;
     }
 
+    // The starting point (ox, oy, oz) of the FL segment gets evaluated before
+    // the above while block or inside the while block. So we do not have to
+    // write it again.
+
     while (state_data[option_index] < stop_data[option_index] && !intersect){
-        ox = y[0] * cos(t_offset + t);
-        oy = y[0] * sin(t_offset + t);
-        oz = y[1];
         new_time = t + t_step;
         while (0 < (new_time - t) * direction){
             flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
@@ -543,6 +569,14 @@ void FLT::runFLT(int omp_thread){
             m_geom_hit_ids[omp_thread] = -2;
             continue;
         }
+
+        // Instead of re-calculating the starting point of a FL, assign the end
+        // point from the current FL segment as the start point of the next
+        // FL segment. (To avoid re-computing it).
+        ox = x1;
+        oy = y1;
+        oz = z1;
+
     }
     m_hits[omp_thread] = intersect;
 
