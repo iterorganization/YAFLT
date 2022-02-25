@@ -19,7 +19,7 @@ FLT::FLT(){
 
 void FLT::prepareThreadContainers(int num_threads){
     // Prepares thread variables. Needs to be called before trying to run
-    // parallel, otherwise a segfault is excepted.
+    // parallel, otherwise a segfault is expected.
     //
     // In essence create a copy of a local variable for each thread.
     //
@@ -614,8 +614,7 @@ void FLT::getBCyln(double r, double z, std::vector<double> &out){
 
     spline2ddiff(m_interp_psi, r - m_r_move, z - m_z_move, dummy, derivFluxdR,
                  derivFluxdZ, dummy); // Bphi here is a dummy storage
-
-    out[0] = sqrt(derivFluxdZ * derivFluxdZ + derivFluxdR + derivFluxdR) / r;
+    out[0] = sqrt(derivFluxdZ * derivFluxdZ + derivFluxdR * derivFluxdR) / r;
     out[1] = m_vacuum_fpol / r; // Bphi
 }
 
