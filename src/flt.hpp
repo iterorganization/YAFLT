@@ -278,19 +278,13 @@ public:
 
     /// Runs a FLT from a starting initial value set by setIV until the end
     /// of time (toroidal angle) or the maximum connection length. The final
-    /// result is a value stored in m_hits and m_conlens.
+    /// result is a value stored and m_conlens and m_geom_hit_ids.
     /// By default if only one thread is run, the default thread ID is 0. If
     /// openMP is activated, then the used must provide thread ID as argument,
     /// otherwise
     /// @param[in] omp_thread is the index of the OpenMP, if activated, thread.
     ///                       Defaults to 0 as "serial" execution.
     void runFLT(int omp_thread=0);
-
-    /// m_hit tells us if the FL, observed in FLT functions reported a hit with
-    /// the shadowing geometry.
-    /// By default if only one thread is run, aka sequential, this is a vector
-    /// of size 1.
-    std::vector<bool> m_hits;
 
     /// m_conlens tells us the length of the FL, evaluated in FLT functions.
     /// By default if only one thread is run, aka sequential, this is a vector

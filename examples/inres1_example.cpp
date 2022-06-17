@@ -128,6 +128,7 @@ int main(){
     double br, bz, bphi;
     double dot_product;
     double angle_rad, angle_deg, angle_inc_deg;
+    bool is_hit;
     int direction;
 
     double FPol_vaccuum = FPOLs[FPOLs.size() - 1];
@@ -198,11 +199,20 @@ int main(){
         obj->setDirection(direction);
         obj->runFLT();
         std::cout << "Triangle Id: " << i << std::endl;
-        std::cout << "\tIs FL shadowed?: " << obj->m_hits[0] << std::endl;
-        nShadowed += obj->m_hits[0];
+
+        // See if connection length is longer than 4.3meters.
+        if (obj->m_conlens[0] > 4.3e3){
+            is_hit = true;
+        }
+        else {
+            is_hit = false;
+        }
+
+        std::cout << "\tIs FL shadowed?: " << is_hit << std::endl;
+        nShadowed += is_hit;
 
         conlen[i] = obj->m_conlens[0];
-        mask[i] = obj->m_hits[0];
+        mask[i] = is_hit;
 
         std::cout << "\tConnection length: " << obj->m_conlens[0] << std::endl;
         std::cout << std::endl;

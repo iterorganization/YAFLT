@@ -27,8 +27,6 @@ void FLT::prepareThreadContainers(int num_threads){
     // vector:
     //     RKF45 m_rkf45_solvers - This class has some state variables needed
     //         for successful solving, therefore each thread needs to have one.
-    //     bool m_hits - This holds the information on whether the FLT detected
-    //         a hit of the FL.
     //     double m_conlens - This holds the information on the connection
     //         length of the FLT.
     //     double m_initial_y - initial value vector of 3*num_threads doubles.
@@ -43,7 +41,6 @@ void FLT::prepareThreadContainers(int num_threads){
     // populated during RTC and cannot be shared between threads.
 
     m_rkf45_solvers.clear();
-    m_hits.clear();
     m_conlens.clear();
     m_initial_y.clear();
     m_geom_hit_ids.clear();
@@ -51,7 +48,6 @@ void FLT::prepareThreadContainers(int num_threads){
 
     for(int i=0; i < num_threads; i++){
         m_rkf45_solvers.push_back(new RKF45());
-        m_hits.push_back(false);
         m_conlens.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
@@ -585,7 +581,6 @@ void FLT::runFLT(int omp_thread){
         oz = z1;
 
     }
-    m_hits[omp_thread] = intersect;
 
     // Register which geometry was hit.
     if (intersect){
