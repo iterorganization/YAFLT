@@ -96,9 +96,11 @@ int main(){
     double br, bz, bphi;
     double dot_product;
     double angle_rad, angle_deg, angle_inc_deg;
-    double fpolAtBarycenter;
+    double fpolVacuum=FPOLs[FPOLs.size()-1];
 
     int direction;
+    // Sign of FPol tell us the initial starting direction.
+    direction = (fpolVacuum < 0.0) ? -1 : 1;
 
     //std::vector<double> p1, p2, p3;
     int nTriangle = triv0.size();
@@ -132,10 +134,6 @@ int main(){
         dot_product = std::inner_product(normal.begin(), normal.end(), magneticVector.begin(), 0.0);
         std::cout << "Dot product: " << dot_product << std::endl;
 
-        fpolAtBarycenter = obj->getFPol(br, bz);
-
-        // Sign of FPol tell us the initial starting direction.
-        direction = (fpolAtBarycenter < 0.0) ? -1 : 1;
         // But what if the normal of the triangle is facing the other direction?
         direction = (dot_product < 0.0) ? -direction : direction;
 

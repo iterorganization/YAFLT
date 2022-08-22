@@ -24,6 +24,7 @@ find_package(Doxygen)
 
 # Options
 option(FLT_BUILD_EXAMPLES "Build examples" ON)
+option(FLT_BUILD_TESTS "Build tests" ON)
 
 # Core library
 add_subdirectory(src)
@@ -31,6 +32,11 @@ add_subdirectory(src)
 # Examples
 if(FLT_BUILD_EXAMPLES)
     add_subdirectory(examples)
+endif()
+
+# Tests
+if(FLT_BUILD_EXAMPLES)
+    add_subdirectory(test)
 endif()
 
 # Documentation

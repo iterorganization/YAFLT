@@ -1,0 +1,6 @@
+This folder contains test for comparing the naive implementation of the bicubic
+interpolation against ALGLIB++ implementation.
+
+1_accuracy.cpp - Compares difference in evaluated interpolations and
+                 derivatives
+2_performance.cpp - Compares the performance of the two implementations.

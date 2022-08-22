@@ -1,17 +1,8 @@
 #include <flt.hpp>
-#include <accell_embree.hpp>
-
-// ALGLIB
-#include <ap.h>
-#include <interpolation.h>
-
-// RKF45 includes
-#include <rkf45.hpp>
 
 // STD includes
 #include <cassert>     // For assert
 #include <vector>
-#include <cmath>
 
 FLT::FLT(){
     m_interp_psi = new BICUBIC_INTERP();

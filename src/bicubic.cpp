@@ -238,6 +238,9 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 
     // Centered finite differences.
     // Now for the rest of the space
+    // This is lazy programming, basically, this order of derivatives should
+    // only be on the 2 row/col width band and not the whole area. But no
+    // problems since it is overwritten by the higher order equations.
     for(int i=1; i<n_rows-1;i++){
         for(int j=1; j<n_cols-1;j++){
             // m_fdx[i][j] = 0.5 *(m_f[i][j+1] - m_f[i][j-1]);
