@@ -222,11 +222,11 @@ void EmbreeAccell::castRay(float ox, float oy, float oz,
 
 bool EmbreeAccell::checkIfHit(int omp_thread){
     if (m_listRayHit[omp_thread].hit.geomID != RTC_INVALID_GEOMETRY_ID){
-#ifndef NDEBUG
-        std::cout << "Found intersection on geometry " << m_listRayHit[omp_thread].hit.geomID;
-        std::cout << ", primitive " << m_listRayHit[omp_thread].hit.primID;
-        std::cout << " at tfar=" << m_listRayHit[omp_thread].ray.tfar << std::endl;
-#endif
+// #ifndef NDEBUG
+//         std::cout << "Found intersection on geometry " << m_listRayHit[omp_thread].hit.geomID;
+//         std::cout << ", primitive " << m_listRayHit[omp_thread].hit.primID;
+//         std::cout << " at tfar=" << m_listRayHit[omp_thread].ray.tfar << std::endl;
+// #endif
         return true;
     }
     return false;
