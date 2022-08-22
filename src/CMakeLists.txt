@@ -1,23 +1,11 @@
-# Alglib dependency
-set(ALGLIB_SOURCES
-    alglib/alglibinternal.cpp
-    alglib/alglibmisc.cpp
-    alglib/ap.cpp
-    alglib/dataanalysis.cpp
-    alglib/diffequations.cpp
-    alglib/fasttransforms.cpp
-    alglib/integration.cpp
-    alglib/interpolation.cpp
-    alglib/linalg.cpp
-    alglib/optimization.cpp
-    alglib/solvers.cpp
-    alglib/specialfunctions.cpp
-    alglib/statistics.cpp
-)
-
 # RKF45 dependency
 set(RKF45_SOURCES
     rkf45.cpp
+)
+
+# Bicubic dependency
+set(BICUBIC_SOURCES
+    bicubic.cpp
 )
 
 # FLT main library
@@ -29,28 +17,15 @@ set(FLT_SOURCES
 # All the header files, which we install in the include directory of the
 # installation directory
 set(FLT_HEADERS
-    alglib/integration.h
-    alglib/optimization.h
-    alglib/stdafx.h
-    alglib/diffequations.h
-    alglib/specialfunctions.h
-    alglib/alglibinternal.h
-    alglib/alglibmisc.h
-    alglib/statistics.h
-    alglib/linalg.h
-    alglib/dataanalysis.h
-    alglib/fasttransforms.h
-    alglib/solvers.h
-    alglib/interpolation.h
-    alglib/ap.h
     rkf45.hpp
     flt.hpp
     accell_embree.hpp
+    bicubic.hpp
     )
 
 # Create the static library and shared library
-add_library(flt_static STATIC ${ALGLIB_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
-add_library(flt SHARED ${ALGLIB_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
+add_library(flt_static STATIC ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
+add_library(flt SHARED ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
 
 # Link embree and add include directories for dependencies.
 foreach(target flt_static flt)

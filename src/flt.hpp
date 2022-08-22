@@ -1,9 +1,13 @@
 #ifndef FLT_H
 #define FLT_H
 
+// RKF45 solver method
 #include <rkf45.hpp>
 
-#include <interpolation.h>
+// Bicubic interpolation method
+#include <bicubic.hpp>
+
+
 #include <cmath>
 #include <accell_embree.hpp>
 
@@ -15,18 +19,11 @@ class FLT
 {
 private:
 
-
     /// Vector that holds the RKF45 solvers. Reason for that is that the solver
     /// is not thread-safe, therefore for parallel reasons a vector is created
     /// to hold the RKF45 solvers.
     std::vector<RKF45*> m_rkf45_solvers;
-
-    /// ALLIB 2D spline interpolation object m_interp_psi is the interpolation
-    /// object on PSI (or flux, units Webb/rad)
-    alglib::spline2dinterpolant m_interp_psi;
-    /// ALGLIB 1D spline interpolation m_interp_fpol is the interpolation
-    /// object for FPOL (toroidal current function, units m T).
-    alglib::spline1dinterpolant m_interp_fpol;
+    BICUBIC_INTERP *m_interp_psi;
 
     /// Flag for stating if the interpolating objects are prepared
     bool m_prepared=false;
@@ -317,6 +314,7 @@ public:
     /// @param[in] y contains the current location of the FL on the R,Z map
     /// @param[in,out] yp holds the derivative values for the next step in
     ///                   solving
+    /// @param[in] omp_thread is the OpenMP thread.
     void r8_flt(double t, double y[2], double yp[2]);
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad)
     /// return the poloidal and toroidal component of the magnetic field.
@@ -369,6 +367,8 @@ public:
     ///              this value should equal to the number of threads we spawn
     ///              when using OpenMP
     void prepareThreadContainers(int n=1);
+
+    void debug_getValues(double r, double z, double &val, double &valdx, double &valdy, int omp_index=0);
 };
 
 #endif //FLT_H

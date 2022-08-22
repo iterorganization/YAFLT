@@ -204,9 +204,23 @@ double RKF45::r8_sign (double x)
   }
 }
 
-void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
+void RKF45::r8_flt(double t, double y[2], double yp[2]){
+    // Derivative function for the RKF45. It evaluates the ratio between the
+    // (R, Z) magnetic components and the toroidal magnetic component in the
+    // cylindrical coordinate system.
+    double derivFluxdX, derivFluxdY, factor;
+
+    m_interp_psi->getValues(y[0] - m_r_move, y[1] - m_z_move, factor,
+                            derivFluxdX, derivFluxdY, m_omp_thread);
+
+    factor = y[0] / m_vacuum_fpol;
+    yp[0] = - derivFluxdY * factor;
+    yp[1] =   derivFluxdX * factor;
+}
+
+void RKF45::r8_fehl(double y[2], double t, double h, double yp[2],
                     double f1[2], double f2[2], double f3[2], double f4[2],
-                    double f5[2], double s[2] )
+                    double f5[2], double s[2])
 //****************************************************************************80
 //
 //  Purpose:
@@ -288,7 +302,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
     f5[i] = y[i] + ch * yp[i];
   }
 
-  obj->r8_flt ( t + ch, f5, f1 );
+  r8_flt ( t + ch, f5, f1);
 
   ch = 3.0 * h / 32.0;
 
@@ -297,7 +311,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
     f5[i] = y[i] + ch * ( yp[i] + 3.0 * f1[i] );
   }
 
-  obj->r8_flt ( t + 3.0 * h / 8.0, f5, f2 );
+  r8_flt ( t + 3.0 * h / 8.0, f5, f2);
 
   ch = h / 2197.0;
 
@@ -309,7 +323,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
     );
   }
 
-  obj->r8_flt ( t + 12.0 * h / 13.0, f5, f3 );
+  r8_flt ( t + 12.0 * h / 13.0, f5, f3);
 
   ch = h / 4104.0;
 
@@ -322,7 +336,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
     );
   }
 
-  obj->r8_flt ( t + h, f5, f4 );
+  r8_flt ( t + h, f5, f4);
 
   ch = h / 20520.0;
 
@@ -337,7 +351,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
     );
   }
 
-  obj->r8_flt ( t + h / 2.0, f1, f5 );
+  r8_flt ( t + h / 2.0, f1, f5 );
 //
 //  Ready to compute the approximate solution at T+H.
 //
@@ -356,7 +370,7 @@ void RKF45::r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
   return;
 }
 
-int RKF45::r8_rkf45(FLT* obj, double y[2], double yp[2], double *t,
+int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
                     double tout, double *relerr, double abserr, int flag)
 
 //****************************************************************************80
@@ -749,7 +763,7 @@ int RKF45::r8_rkf45(FLT* obj, double y[2], double yp[2], double *t,
   {
     m_init = 0;
     m_kop = 0;
-    obj->r8_flt ( *t, y, yp );
+    r8_flt ( *t, y, yp);
     m_nfe = 1;
 
     if ( *t == tout )
@@ -831,7 +845,7 @@ int RKF45::r8_rkf45(FLT* obj, double y[2], double yp[2], double *t,
     {
       y[i] = y[i] + dt * yp[i];
     }
-    obj->r8_flt ( *t, y, yp );
+    r8_flt ( *t, y, yp );
     m_nfe = m_nfe + 1;
 
     delete [] f1;
@@ -936,7 +950,7 @@ int RKF45::r8_rkf45(FLT* obj, double y[2], double yp[2], double *t,
 //
 //  Advance an approximate solution over one step of length H.
 //
-      r8_fehl ( obj, y, *t, m_h, yp, f1, f2, f3, f4, f5, f1 );
+      r8_fehl ( y, *t, m_h, yp, f1, f2, f3, f4, f5, f1 );
       m_nfe = m_nfe + 5;
 //
 //  Compute and test allowable tolerances versus local error estimates
@@ -1018,7 +1032,7 @@ int RKF45::r8_rkf45(FLT* obj, double y[2], double yp[2], double *t,
     {
       y[i] = f1[i];
     }
-    obj->r8_flt ( *t, y, yp );
+    r8_flt ( *t, y, yp );
     m_nfe = m_nfe + 1;
 //
 //  Choose the next stepsize.  The increase is limited to a factor of 5.

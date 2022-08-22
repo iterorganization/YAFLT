@@ -14,6 +14,7 @@
 #include <cmath>
 
 FLT::FLT(){
+    m_interp_psi = new BICUBIC_INTERP();
     return;
 }
 
@@ -47,7 +48,9 @@ void FLT::prepareThreadContainers(int num_threads){
     m_directions.clear();
 
     for(int i=0; i < num_threads; i++){
-        m_rkf45_solvers.push_back(new RKF45());
+        RKF45 *solver = new RKF45();
+        solver->set_interpolator(m_interp_psi);
+        m_rkf45_solvers.push_back(solver);
         m_conlens.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
@@ -60,6 +63,7 @@ void FLT::prepareThreadContainers(int num_threads){
         // Prepare embree RayHits
         m_embree_obj->prepareThreadContainers(num_threads);
     }
+    m_interp_psi->prepareContainers(num_threads);
 }
 
 void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){
@@ -168,17 +172,21 @@ void FLT::setDirection(int direction, int omp_thread){
 bool FLT::prepareInterpolation(){
     // Allocates and creates the interpolation objects. As well as creates the
     // RKF45 object.
-    alglib::real_1d_array R, Z, Psi, Flux, FPol;
 
-    R.setcontent(m_r_points.size(), &(m_r_points[0]));
-    Z.setcontent(m_z_points.size(), &(m_z_points[0]));
-    Psi.setcontent(m_psi_values.size(), &(m_psi_values[0]));
-    Flux.setcontent(m_flux_points.size(), &(m_flux_points[0]));
-    FPol.setcontent(m_fpol_values.size(), &(m_fpol_values[0]));
-
-    spline1dbuildcubic(Flux, FPol, m_interp_fpol);
-    spline2dbuildbicubicv(R, m_NDIMR, Z, m_NDIMZ, Psi, 1, m_interp_psi);
-
+    int n_rows, n_cols;
+    std::vector<std::vector<double>> reshaped_Psi;
+    std::vector<double> buffer;
+    n_rows = m_z_points.size();
+    n_cols = m_r_points.size();
+    for (int i=0; i<n_rows; i++){
+        buffer.clear();
+        for (int j=0; j<n_cols; j++){
+            buffer.push_back(m_psi_values[i * n_cols + j]);
+        }
+        // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
+        reshaped_Psi.push_back(buffer);
+    }
+    m_interp_psi->setArrays(m_r_points, m_z_points, reshaped_Psi);
     m_prepared = true;
     return true;
 }
@@ -189,9 +197,9 @@ void FLT::r8_flt(double t, double y[2], double yp[2]){
     // cylindrical coordinate system.
     double derivFluxdX, derivFluxdY, factor;
 
-    spline2ddiff(m_interp_psi, y[0] - m_r_move, y[1] - m_z_move, factor,
-                 derivFluxdX, derivFluxdY, factor); // factor here is a dummy
-                                                    // storage
+    m_interp_psi->getValues(y[0] - m_r_move, y[1] - m_z_move, factor,
+                            derivFluxdX, derivFluxdY);
+
     factor = y[0] / m_vacuum_fpol;
     yp[0] = - derivFluxdY * factor;
     yp[1] =   derivFluxdX * factor;
@@ -205,7 +213,6 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
     // The state_index tells us what is the termination condition.
     //  0 - by time (toroidal angle) - default
     //  1 - by length (connection length)
-
     int option_index;
 
 
@@ -275,6 +282,12 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
     oy = y[0] * sin(t_offset);
     oz = y[1];
 
+    // Set OpenMP thread id to solver
+    m_rkf45_solvers[omp_thread]->set_omp_thread(omp_thread);
+    m_rkf45_solvers[omp_thread]->set_r_move(m_r_move);
+    m_rkf45_solvers[omp_thread]->set_z_move(m_z_move);
+    m_rkf45_solvers[omp_thread]->set_vacuum_fpol(m_vacuum_fpol);
+
     if (with_flt){
         // For avoiding self-intersection test. Follow the FL for a small length
         // and then start from there. The value should be around 1 cm but not too
@@ -293,7 +306,7 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
             oz = y[1];
             new_time = t + pre_t_step;
             while (0 < (new_time - t) * direction){
-                flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
+                flag = m_rkf45_solvers[omp_thread]->r8_rkf45(y, yp, &t,
                                                             new_time, &relerr,
                                                             abserr, flag);
                 flag = 2; // Until we find an actual problem, ignore messages from
@@ -326,15 +339,35 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
 
     // The starting point (ox, oy, oz) of the FL segment gets evaluated before
     // the above while block or inside the while block. So we do not have to
-    // write it again.
+    // write it again
+#ifndef NDEBUG
+        bool outside;
+#endif
+
 
     while (state_data[option_index] < stop_data[option_index] && !intersect){
+
+#ifndef NDEBUG
+        printf("%f %f\n", y[0], y[1]);
+        outside = y[0] < m_r_min || y[0] > m_r_max || y[1] < m_z_min || y[1] > m_z_max;
+        printf("outside R,Z=%d\n", outside);
+#endif
+
         new_time = t + t_step;
 
         while (0 < (new_time - t) * direction){
-            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
+
+#ifndef NDEBUG
+            printf("Calling rkf45\n");
+#endif
+
+            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(y, yp, &t,
                                                         new_time, &relerr,
                                                         abserr, flag);
+#ifndef NDEBUG
+            printf(" Flag=%d\n", flag);
+#endif
+
             flag = 2; // Until we find an actual problem, ignore messages from
                       // rkf45 as they do not indicate a problem
         }
@@ -371,16 +404,18 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
                                       omp_thread);
             intersect = m_embree_obj->checkIfHit(omp_thread);
             // Check if point is outside the computation domain
-            if (y[0] < m_r_min || y[0] > m_r_max){
-                // For now treat this as an intersect.
-                intersect = true;
-                continue;
-            }
-            if (y[1] < m_z_min || y[1] > m_z_max){
-                // For now treat this as an intersect.
-                intersect = true;
-                continue;
-            }
+        }
+        // Even if we do not have FLT activated, don't bother calculating
+        // outside the R Z domain.
+        if (y[0] < m_r_min || y[0] > m_r_max){
+            // For now treat this as an intersect.
+            intersect = true;
+            continue;
+        }
+        if (y[1] < m_z_min || y[1] > m_z_max){
+            // For now treat this as an intersect.
+            intersect = true;
+            continue;
         }
 
         // Instead of re-calculating the starting point of a FL, assign the end
@@ -473,6 +508,12 @@ void FLT::runFLT(int omp_thread){
     oy = y[0] * sin(t_offset);
     oz = y[1];
 
+    // Set the OpenMP thread id
+    m_rkf45_solvers[omp_thread]->set_omp_thread(omp_thread);
+    m_rkf45_solvers[omp_thread]->set_r_move(m_r_move);
+    m_rkf45_solvers[omp_thread]->set_z_move(m_z_move);
+    m_rkf45_solvers[omp_thread]->set_vacuum_fpol(m_vacuum_fpol);
+
     // For avoiding self-intersection test. Follow the FL for a small length
     // and then start from there. The value should be around 1 cm but not too
     // much.
@@ -484,7 +525,7 @@ void FLT::runFLT(int omp_thread){
     while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
         new_time = t + pre_t_step;
         while (0 < (new_time - t) * direction){
-            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
+            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(y, yp, &t,
                                                         new_time, &relerr,
                                                         abserr, flag);
             flag = 2; // Until we find an actual problem, ignore messages from
@@ -519,10 +560,16 @@ void FLT::runFLT(int omp_thread){
 
     while (state_data[option_index] < stop_data[option_index] && !intersect){
         new_time = t + t_step;
+#ifndef NDEBUG
+        printf("%f %f\n", y[0], y[1]);
+#endif
         while (0 < (new_time - t) * direction){
-            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(this, y, yp, &t,
+            flag = m_rkf45_solvers[omp_thread]->r8_rkf45(y, yp, &t,
                                                         new_time, &relerr,
                                                         abserr, flag);
+#ifndef NDEBUG
+            printf("Flag=%d\n", flag);
+#endif
             flag = 2; // Until we find an actual problem, ignore messages from
                       // rkf45 as they do not indicate a problem*/
         }
@@ -607,8 +654,9 @@ void FLT::getBCyln(double r, double z, std::vector<double> &out){
 
     double derivFluxdR, derivFluxdZ, dummy;
 
-    spline2ddiff(m_interp_psi, r - m_r_move, z - m_z_move, dummy, derivFluxdR,
-                 derivFluxdZ, dummy); // Bphi here is a dummy storage
+    m_interp_psi->getValues(r - m_r_move, z - m_z_move, dummy,
+                            derivFluxdR, derivFluxdZ);
+
     out[0] = sqrt(derivFluxdZ * derivFluxdZ + derivFluxdR * derivFluxdR) / r;
     out[1] = m_vacuum_fpol / r; // Bphi
 }
@@ -630,9 +678,8 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
     // Phi is taken from the physical point where we wish to calculate the BCart.
     double derivFluxdR, derivFluxdZ, bphi, br, bz;
 
-    spline2ddiff(m_interp_psi, r - m_r_move, z - m_z_move, bphi, derivFluxdR,
-                 derivFluxdZ, bphi); // Bphi here is a dummy storage
-
+    m_interp_psi->getValues(r - m_r_move, z - m_z_move, bphi,
+                            derivFluxdR, derivFluxdZ);
 
     br = -derivFluxdZ / r;
     bphi = m_vacuum_fpol / r;
@@ -647,39 +694,19 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
     // return magVec;
 }
 
-double FLT::getFPol(double r, double z){
-    // Returns value of the poloidal flux current.
-    //
-    // In order to get the toroidal component one has to divide by major radius,
-    // or essentially in this case with R.
-    //
-    // Bt = FPol / r
-    //
-    // Used more or less to determine the starting direction of FLT.
-    double fpol;
-    fpol = spline2dcalc(m_interp_psi, r - m_r_move, z - m_z_move);
-    fpol = spline1dcalc(m_interp_fpol, fpol);
-    return fpol;
-}
-
-double FLT::getFPol(double flux){
-    // Returns value of the poloidal flux current.
-    //
-    // In order to get the toroidal component one has to divide by major radius.
-    //
-    // Bt = FPol / r
-    //
-    // Used more or less to determine the starting direction of FLT.
-    double fpol;
-    fpol = spline1dcalc(m_interp_fpol, flux);
-    return fpol ;
-}
-
-
 double FLT::getPoloidalFlux(double r, double z){
     // Returns the value of the poloidal flux at point (r,z).
-    double flux=spline2dcalc(m_interp_psi, r - m_r_move, z - m_z_move);
+    double flux;
+
+    double dummy;
+    m_interp_psi->getValues(r - m_r_move, z - m_z_move, flux,
+                            dummy, dummy);
+
     return flux;
+}
+
+void FLT::debug_getValues(double r, double z, double &val, double &valdx, double &valdy, int omp_index){
+    m_interp_psi->getValues(r, z, val, valdx, valdy, omp_index);
 }
 
 void FLT::setEmbreeObj(EmbreeAccell* accellObj){

@@ -2,6 +2,7 @@
 #define RKF45_H
 
 #include <flt.hpp>
+#include <bicubic.hpp>
 
 class FLT; /*Forward declaration*/
 class RKF45
@@ -17,19 +18,37 @@ private:
     double m_relerr_save;
     double m_remin;
     double m_r8epsilon;
+
+    // Externally set variables
+    BICUBIC_INTERP *m_interp_psi;
+    int m_omp_thread=0;
+    double m_r_move = 0.0;
+    double m_z_move = 0.0;
+    double m_vacuum_fpol;
+#ifndef NDEBUG
+    long int m_number_of_evals=0;
+#endif
+
 public:
     RKF45();
     ~RKF45(){};
+    void set_r_move(double r_move){m_r_move = r_move;};
+    void set_z_move(double z_move){m_z_move = z_move;};
+    void set_vacuum_fpol(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
+    void set_interpolator(BICUBIC_INTERP *interp){m_interp_psi = interp;};
+    void set_omp_thread(int omp_thread){m_omp_thread=omp_thread;};
+    void r8_flt(double t, double y[2], double yp[2]);
     double r8_abs(double x);
     double r8_epsilon();
     double r8_max(double x, double y);
     double r8_min(double x, double y);
-    void r8_fehl(FLT *obj, double y[2], double t, double h, double yp[2],
+    void r8_fehl(double y[2], double t, double h, double yp[2],
                  double f1[2], double f2[2], double f3[2], double f4[2],
                  double f5[2], double s[2]);
-    int r8_rkf45(FLT *obj, double y[2], double yp[2], double *t, double tout,
+    int r8_rkf45(double y[2], double yp[2], double *t, double tout,
                  double *relerr, double abserr, int flag);
     double r8_sign(double x);
+
 };
 
 #endif /*RKF45_H*/
