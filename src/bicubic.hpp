@@ -37,12 +37,11 @@ private:
     int m_nx, m_ny;
 
     // Container for the coefficients.
-    std::vector<std::vector<double>> m_omp_a;
-    std::vector<int> m_cell_row, m_cell_col;
+    std::vector<double> m_a;
+    int m_cell_row, m_cell_col;
 
-    void rcin(double x, double y, double &out_cell_x, double &out_cell_y,
-              int omp_index=0);
-    void interpolate(int r, int c, int omp_index=0);
+    void rcin(double x, double y, double &out_cell_x, double &out_cell_y);
+    void interpolate(int r, int c);
 
 public:
     std::vector<std::vector<double>> m_f;
@@ -56,7 +55,9 @@ public:
     void setArrays(std::vector<double> x, std::vector<double> y,
                    std::vector<std::vector<double>> f);
     void getValues(double x, double y, double &val, double &valdx,
-                   double &valdy, int omp_index=0);
+                   double &valdy);
+    void debugGetValues(double x, double y, double &val, double &valdx,
+                        double &valdy, double &valdxdy);
 
 };
 #endif /*BICUBIC_H*/

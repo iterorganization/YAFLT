@@ -27,6 +27,8 @@ private:
 
     /// Flag for stating if the interpolating objects are prepared
     bool m_prepared=false;
+    bool m_interpolation_prepared=false;
+    bool m_containers_prepared=false;
 
     /// Dimensions of the R, Z space.
     size_t m_NDIMR=-1;
@@ -66,6 +68,7 @@ private:
     /// array must be, m_NDIMR * m_NDIMZ. In other words the rows of the PSI
     /// matrix are concatenated into one array.
     std::vector<double> m_psi_values;
+    std::vector<std::vector<double>> m_reshaped_psi;
 
     /// 1D array of poloidal flux values in units of Webb/rad. This defines the
     /// definition space of the FPOL function, which gives us the toroidal
@@ -369,7 +372,7 @@ public:
     ///              when using OpenMP
     void prepareThreadContainers(int n=1);
 
-    void debug_getValues(double r, double z, double &val, double &valdx, double &valdy, int omp_index=0);
+    void debug_getValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index=0);
 };
 
 #endif //FLT_H

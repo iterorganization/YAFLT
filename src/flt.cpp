@@ -4,6 +4,8 @@
 #include <cassert>     // For assert
 #include <vector>
 
+#include <stdio.h>
+
 FLT::FLT(){
     m_interp_psi = new BICUBIC_INTERP();
     return;
@@ -40,7 +42,11 @@ void FLT::prepareThreadContainers(int num_threads){
 
     for(int i=0; i < num_threads; i++){
         RKF45 *solver = new RKF45();
-        solver->set_interpolator(m_interp_psi);
+        BICUBIC_INTERP *interp = new BICUBIC_INTERP();
+        solver->set_interpolator(interp);
+        interp->prepareContainers(1); // It's slower. Need to find OMP
+                                      // bottleneck
+
         m_rkf45_solvers.push_back(solver);
         m_conlens.push_back(0.0);
         m_initial_y.push_back(0.0);
@@ -55,6 +61,14 @@ void FLT::prepareThreadContainers(int num_threads){
         m_embree_obj->prepareThreadContainers(num_threads);
     }
     m_interp_psi->prepareContainers(num_threads);
+    m_containers_prepared = true;
+    if (m_interpolation_prepared){
+        // Set the interpolator data
+        for (int i=0;i<m_rkf45_solvers.size();i++){
+            BICUBIC_INTERP* interp = m_rkf45_solvers[i]->get_interpolator();
+            interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+        }
+    }
 }
 
 void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){
@@ -165,20 +179,28 @@ bool FLT::prepareInterpolation(){
     // RKF45 object.
 
     int n_rows, n_cols;
-    std::vector<std::vector<double>> reshaped_Psi;
     std::vector<double> buffer;
     n_rows = m_z_points.size();
     n_cols = m_r_points.size();
+    m_reshaped_psi.clear();
     for (int i=0; i<n_rows; i++){
         buffer.clear();
         for (int j=0; j<n_cols; j++){
             buffer.push_back(m_psi_values[i * n_cols + j]);
         }
-        // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
-        reshaped_Psi.push_back(buffer);
+        // m_reshaped_psi.insert(m_reshaped_psi.begin(), buffer);
+        m_reshaped_psi.push_back(buffer);
     }
-    m_interp_psi->setArrays(m_r_points, m_z_points, reshaped_Psi);
-    m_prepared = true;
+    m_interp_psi->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+    m_interpolation_prepared = true;
+
+    if (m_containers_prepared){
+        // Set the Arrays
+        for (int i=0;i<m_rkf45_solvers.size();++i){
+            BICUBIC_INTERP* interp = m_rkf45_solvers[i]->get_interpolator();
+            interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+        }
+    }
     return true;
 }
 
@@ -512,6 +534,7 @@ void FLT::runFLT(int omp_thread){
     // In order to determine what should be the first step we simply take the
     // major radius of the element and make sure that there are at least 2
     // steps between the origin point and the self avoiding intersection length
+
     pre_t_step = std::asin(0.1 * m_self_intersection_avoidance_length / y[0]) * direction;
     while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
         new_time = t + pre_t_step;
@@ -696,8 +719,8 @@ double FLT::getPoloidalFlux(double r, double z){
     return flux;
 }
 
-void FLT::debug_getValues(double r, double z, double &val, double &valdx, double &valdy, int omp_index){
-    m_interp_psi->getValues(r, z, val, valdx, valdy, omp_index);
+void FLT::debug_getValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index){
+    m_interp_psi->debugGetValues(r, z, val, valdx, valdy, valdxdy);
 }
 
 void FLT::setEmbreeObj(EmbreeAccell* accellObj){

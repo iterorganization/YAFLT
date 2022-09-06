@@ -211,7 +211,7 @@ void RKF45::r8_flt(double t, double y[2], double yp[2]){
     double derivFluxdX, derivFluxdY, factor;
 
     m_interp_psi->getValues(y[0] - m_r_move, y[1] - m_z_move, factor,
-                            derivFluxdX, derivFluxdY, m_omp_thread);
+                            derivFluxdX, derivFluxdY);
 
     factor = y[0] / m_vacuum_fpol;
     yp[0] = - derivFluxdY * factor;

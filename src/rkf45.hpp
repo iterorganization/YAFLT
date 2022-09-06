@@ -25,9 +25,6 @@ private:
     double m_r_move = 0.0;
     double m_z_move = 0.0;
     double m_vacuum_fpol;
-#ifndef NDEBUG
-    long int m_number_of_evals=0;
-#endif
 
 public:
     RKF45();
@@ -36,6 +33,7 @@ public:
     void set_z_move(double z_move){m_z_move = z_move;};
     void set_vacuum_fpol(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
     void set_interpolator(BICUBIC_INTERP *interp){m_interp_psi = interp;};
+    BICUBIC_INTERP* get_interpolator(){return m_interp_psi;};
     void set_omp_thread(int omp_thread){m_omp_thread=omp_thread;};
     void r8_flt(double t, double y[2], double yp[2]);
     double r8_abs(double x);
