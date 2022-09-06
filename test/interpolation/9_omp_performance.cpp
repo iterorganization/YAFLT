@@ -4,9 +4,6 @@
 // Naive bicubic interpolation method
 #include <bicubic.hpp>
 
-// Alglib implementation
-#include <interpolation.h>
-
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h> /*srand, rand*/
@@ -15,9 +12,13 @@
 // Measure time
 #include <chrono>
 
+// OMP
+#include <omp.h>
 #include <random>
+#define THREAD_NUM 4
 
 int main(){
+    omp_set_num_threads(THREAD_NUM);
     srand(time(NULL));
     // Prepare the naive interpolation.
     BICUBIC_INTERP *naive_interp = new BICUBIC_INTERP();
@@ -34,17 +35,22 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers(); // DUMMY DEPRECATED
+    naive_interp->prepareContainers(THREAD_NUM);
     naive_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
 
-    // Alglib interpolator
-    alglib::real_1d_array R, Z, Psi;
-    alglib::spline2dinterpolant alglib_interp;
-    R.setcontent(eq3_Rs.size(), &(eq3_Rs[0]));
-    Z.setcontent(eq3_Zs.size(), &(eq3_Zs[0]));
-    Psi.setcontent(eq3_Psi.size(), &(eq3_Psi[0]));
-    spline2dbuildbicubicv(R, eq3_Rs.size(), Z, eq3_Zs.size(),
-                          Psi, 1, alglib_interp);
+    // Now prepare THREAD_NUM interpolators, to see if having multiple
+    // instances is faster...
+    std::vector<BICUBIC_INTERP *> naive_interpolators;
+    naive_interpolators.resize(THREAD_NUM);
+    for (int i=0; i<THREAD_NUM; i++){
+        BICUBIC_INTERP *interp = new BICUBIC_INTERP();
+        naive_interpolators[i] = interp;
+
+        // Populate with data
+        naive_interpolators[i]->prepareContainers(1); // Only one!
+        naive_interpolators[i]->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
+    }
+
 
     // For Random prepare lower and upper boundaries
     double rmin, rmax, rdiff, zmin, zmax, zdiff;
@@ -64,9 +70,12 @@ int main(){
     //     printf("%f %f\n", buff_x, buff_y);
     // }
     int N = 100*1000*1000;
+    int chunk_N = N / THREAD_NUM;
     // OMP related variables
     int tid;
     int offset;
+    int index;
+
 
     std::vector<double> buff_r;
     std::vector<double> buff_z;
@@ -86,23 +95,49 @@ int main(){
     auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     printf("Completed in: %f seconds\n", elapsed.count() * 1e-9);
 
-
+    // SERIAL
     begin = std::chrono::high_resolution_clock::now();
+    tid = 0;
     for (int i=0; i<N; i++){
         naive_interp->debugGetValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Naive interpolation time for %d iterations: %f\n", N, elapsed.count() * 1e-9);
+    printf("Serial interpolation time for %d iterations: %f\n", N, elapsed.count() * 1e-9);
 
+
+    // DEPRECATED
+    // // OMP WITH ONE OBJECT
+    // begin = std::chrono::high_resolution_clock::now();
+    // #pragma omp parallel private(tid, offset, index, fval, fvaldx, fvaldy, fvaldxdy)
+    // {
+    //     tid = omp_get_thread_num();
+    //     offset = tid * chunk_N;
+    //     for (int i=0; i<chunk_N; i++){
+    //         index = offset + i;
+    //         naive_interp->debugGetValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy, tid);
+    //     }
+    // }
+
+    // end = std::chrono::high_resolution_clock::now();
+    // elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+    // printf("Parallel interpolation time for %d iterations with %d threads: %f\n", N, THREAD_NUM, elapsed.count() * 1e-9);
+
+    // OMP WITH THREAD_NUM OBJECTS.
     begin = std::chrono::high_resolution_clock::now();
-    for (int i=0; i<N; i++){
-        spline2ddiff(alglib_interp, buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
+    #pragma omp parallel private(tid, offset, index, fval, fvaldx, fvaldy, fvaldxdy)
+    {
+        tid = omp_get_thread_num();
+        offset = tid * chunk_N;
+        for (int i=0; i<chunk_N; i++){
+            index = offset + i;
+            naive_interpolators[tid]->debugGetValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy);
+        }
     }
 
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Alglib interpolation time for %d iterations: %f\n", N, elapsed.count() * 1e-9);
+    printf("Parallel interpolation time for %d iterations with %d threads and %d separate interpolator objects: %f\n", N, THREAD_NUM, THREAD_NUM, elapsed.count() * 1e-9);
 
 
     return 0;

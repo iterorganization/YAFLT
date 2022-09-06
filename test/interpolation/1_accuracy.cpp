@@ -65,7 +65,7 @@ int main(){
     //     printf("%f %f\n", buff_x, buff_y);
     // }
     int N = 1000*1000;
-    printf("Comparing %d values", N);
+    printf("Comparing %d values\n", N);
     bool print;
     int counts=0;
     double abs_max_psi=-1, abs_max_psidx=-1, abs_max_psidy=-1, buff;

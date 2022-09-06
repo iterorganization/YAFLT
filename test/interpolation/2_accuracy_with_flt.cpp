@@ -32,7 +32,7 @@ int main(){
     obj->setVacuumFPOL(drsep10_Zs[drsep10_Zs.size() - 1]);
 
     obj->prepareInterpolation();
-    obj->prepareThreadContainers(5);
+    obj->prepareThreadContainers();
 
     // Alglib interpolator
     alglib::real_1d_array R, Z, Psi;
@@ -53,27 +53,30 @@ int main(){
     zdiff = zmax - zmin;
 
     // Output variables
-    double naive_fval, naive_fvaldx, naive_fvaldy;//, naive_fvaldxdy;
+    double naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy;//, naive_fvaldxdy;
     double alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy;
 
     //Random check
     double buff_x, buff_y;
 
-    int N = 100*1000*1000;
+    int N = 10*1000*1000;
     printf("Comparing %d values", N);
-    bool print;
+    bool print_f, print_dx, print_dy, print_dxdy;
     int counts=0;
-    double diff=0.01;
-    double abs_max_psi=-1, abs_max_psidx=-1, abs_max_psidy=-1, buff;
+    double diff=0.0001;
+    double abs_max_psi=-1, abs_max_psidx=-1, abs_max_psidy=-1, abs_max_psidxdy=-1, buff;
     for (int i=0; i<N; i++){
-        print=false;
+        print_f=false;
+        print_dx=false;
+        print_dy=false;
+        print_dxdy=false;
         buff_x = rmin + rdiff * rand() / RAND_MAX;
         buff_y = zmin + zdiff * rand() / RAND_MAX;
-        obj->debug_getValues(buff_x, buff_y, naive_fval, naive_fvaldx, naive_fvaldy, 3);
+        obj->debug_getValues(buff_x, buff_y, naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy);
         spline2ddiff(alglib_interp, buff_x, buff_y, alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
         buff = std::fabs(naive_fval - alglib_fval) / alglib_fval;
         if (buff > diff) {
-            print=true;
+            print_f=true;
         }
         if (buff > abs_max_psi) {
             abs_max_psi = buff;
@@ -81,7 +84,7 @@ int main(){
 
         buff = std::fabs(naive_fvaldx - alglib_fvaldx) / alglib_fvaldx;
         if (buff > diff) {
-            print=true;
+            print_dx=true;
         }
         if (buff > abs_max_psidx) {
             abs_max_psidx = buff;
@@ -89,18 +92,40 @@ int main(){
 
         buff = std::fabs(naive_fvaldy - alglib_fvaldy) / alglib_fvaldy;
         if (buff > diff) {
-            print=true;
+            print_dy=true;
         }
         if (buff > abs_max_psidy) {
             abs_max_psidy = buff;
         }
 
+        buff = std::fabs(naive_fvaldxdy - alglib_fvaldxdy) / alglib_fvaldxdy;
+        if (buff > diff) {
+            print_dxdy=true;
+        }
+        if (buff > abs_max_psidy) {
+            abs_max_psidxdy = buff;
+        }
+
         // Now check if it is inside the vessell!
-        if (print && 4.0 <= buff_x && buff_x <= 8.5 && -4.3 <= buff_y && buff_y <= 4.8) {
+        if (print_f || print_dx || print_dy || print_dxdy) {
+            printf("Point");
+            if (print_f){
+                printf("Val");
+            }
+            if (print_dx){
+                printf("Dx");
+            }
+            if (print_dy){
+                printf("Dy");
+            }
+            if (print_dxdy){
+                printf("dxdy");
+            }
+            printf(" %f %f\n", buff_x, buff_y);
+
             counts = counts + 1;
-            printf("Point %f %f\n", buff_x, buff_y);
-            printf("Naive  %f %f %f\n", naive_fval, naive_fvaldx, naive_fvaldy);
-            printf("Alglib %f %f %f\n", alglib_fval, alglib_fvaldx, alglib_fvaldy);
+            printf("Naive  %f %f %f %f\n", naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy);
+            printf("Alglib %f %f %f %f\n", alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
         }
     }
     printf("Total tries: %d\n", N);
@@ -108,5 +133,6 @@ int main(){
     printf("Maximum error psi: %f\n", abs_max_psi);
     printf("Maximum error psidx: %f\n", abs_max_psidx);
     printf("Maximum error psidy: %f\n", abs_max_psidy);
+    printf("Maximum error psidxdy: %f\n", abs_max_psidxdy);
     return 0;
 }
