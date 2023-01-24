@@ -102,9 +102,11 @@ public:
     ///                       runs are adequate.
     bool checkIfHit(int omp_thread=0);
 
-    /// The returnGeomId returns the integer of the geomtry that was hit. It
+    /// The returnGeomId returns the integer of the geometry that was hit. It
     /// makes sense to call this function if there is an intersection, or for
     /// example if checkIfHit returns true.
+
+    /// In this case the geometry Id is the Id of the loaded mesh.
 
     /// @param[in] omp_thread ID of the OpenMP thread. Specifies the location of
     ///                       thread related variables. Users should only take
@@ -112,6 +114,20 @@ public:
     ///                       used. Otherwise the default values for sequential
     ///                       runs are adequate.
     int returnGeomId(int omp_thread=0);
+
+    /// The returnPrimId returns the integer of the primitive that was hit. It
+    /// makes sense to call this function if there is an intersection, or for
+    /// example if checkIfHit returns ture.
+
+    /// In this case the primitive Id is the Id of the intersected triangle
+    /// of a loaded mesh.
+
+    /// @param[in] imp_thread ID of the OpenMP thread. Specifies the location of
+    ///                       thread related variables. Users should only take
+    ///                       into consideration when parallel OpenMP blocks are
+    ///                       used. Otherwise the default values for sequential
+    ///                       runs are adequate.
+    int returnPrimId(int omp_thread=0);
 
     /// Function that prepares local thread related variables. In order to avoid
     /// writing parallel code inside the low-level kernel, one must prepare the

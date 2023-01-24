@@ -305,6 +305,10 @@ public:
     /// -3 : The FL wasn't followed at all, i.e., the initialized value
     std::vector<int> m_geom_hit_ids;
 
+    /// m_prim_hit_ids tells us, in case of intersection what is the ID of the
+    /// intersected triangle.
+    std::vector<int> m_prim_hit_ids;
+
     /// Derivative function for the RKF45 object. Since the FL are traced in the
     /// parametric time or toroidal angle, the values stored in the derivative
     /// variable yp yield the ratio between the poloidal components of the

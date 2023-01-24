@@ -38,6 +38,7 @@ void FLT::prepareThreadContainers(int num_threads){
     m_conlens.clear();
     m_initial_y.clear();
     m_geom_hit_ids.clear();
+    m_prim_hit_ids.clear();
     m_directions.clear();
 
     for(int i=0; i < num_threads; i++){
@@ -53,6 +54,7 @@ void FLT::prepareThreadContainers(int num_threads){
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_geom_hit_ids.push_back(-3);
+        m_prim_hit_ids.push_back(-1)
         m_directions.push_back(1);
     }
 
@@ -647,6 +649,7 @@ void FLT::runFLT(int omp_thread){
     if (intersect){
         if (!left_computational_domain){
             m_geom_hit_ids[omp_thread] = m_embree_obj->returnGeomId(omp_thread);
+            m_prim_hit_ids[omp_thread] = m_embree_obj->returnPrimId(omp_thread);
         }
     }
     else {

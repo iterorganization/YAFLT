@@ -235,3 +235,9 @@ bool EmbreeAccell::checkIfHit(int omp_thread){
 int EmbreeAccell::returnGeomId(int omp_thread){
     return (int) m_listRayHit[omp_thread].hit.geomID;
 }
+
+int EmbreeAccell::returnPrimId(int omp_thread){
+    /// It makes no sense why the geomID in Embree documentation is called the
+    /// primitive ID and the primID is called the geometry ID... Maybe typo.
+    return (int) m_listRayHit[omp_thread].hit.primID;
+}
