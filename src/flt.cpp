@@ -54,7 +54,7 @@ void FLT::prepareThreadContainers(int num_threads){
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_geom_hit_ids.push_back(-3);
-        m_prim_hit_ids.push_back(-1)
+        m_prim_hit_ids.push_back(-1);
         m_directions.push_back(1);
     }
 
