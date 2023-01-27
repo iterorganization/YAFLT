@@ -54,7 +54,7 @@ void FLT::prepareThreadContainers(int num_threads){
         m_initial_y.push_back(0.0);
         m_initial_y.push_back(0.0);
         m_geom_hit_ids.push_back(-3);
-        m_prim_hit_ids.push_back(-1);
+        m_prim_hit_ids.push_back(-3);
         m_directions.push_back(1);
     }
 
@@ -625,6 +625,7 @@ void FLT::runFLT(int omp_thread){
             left_computational_domain = true;
             // Set the geom hit id to -2
             m_geom_hit_ids[omp_thread] = -2;
+            m_prim_hit_ids[omp_thread] = -2;
             continue;
         }
         if (y[1] < m_z_min || y[1] > m_z_max){
@@ -633,6 +634,7 @@ void FLT::runFLT(int omp_thread){
             left_computational_domain = true;
             // Set the geom hit id to -2
             m_geom_hit_ids[omp_thread] = -2;
+            m_prim_hit_ids[omp_thread] = -2;
             continue;
         }
 
@@ -658,6 +660,8 @@ void FLT::runFLT(int omp_thread){
         // connection length. In case the FL leaves the computational domain
         // this is already taken care of.
         m_geom_hit_ids[omp_thread] = -1;
+        m_prim_hit_ids[omp_thread] = -1;
+
     }
     m_conlens[omp_thread] = state_data[BY_LENGTH];
 }
