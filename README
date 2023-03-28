@@ -1,8 +1,26 @@
-README:
+# L2G C++
 
-Debug build CMake:
+## Introduction
+
+This is a FLT kernel that contains the minimum amount of required functions to
+run Field Line-Tracing in a tokamak, using axisymmetric equilibrium data.
+
+## Building
+
+In order to build it, CMake can be used. Embree is the only dependency that is
+required and it is found via CMake Find functions.
+
+
+## Debug build CMake
+
+In order to have LSP-clangd functionality in editors for easier programming, we
+need to configure the project in Debug configuration with the flag
+CMAKE_EXPORT_COMPILE_COMMANDS=ON.
+
+```
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug /path/to/source
+```
 
-Additional support for LSP clangd:
+Then run the following command to get the JSON file LSP-clangd is using:
 
 compdb -p /path/to/build/ list > /path/to/source/compile_commands.json
