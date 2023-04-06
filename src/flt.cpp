@@ -34,6 +34,12 @@ void FLT::prepareThreadContainers(int num_threads){
     // Subsequently call the Embree allocation to do the same as structs are
     // populated during RTC and cannot be shared between threads.
 
+    if (num_threads == m_prepared_for_n_threads) {
+        /// Nothing to do, we already have enough workers prepared. If this
+        /// function is called to many times, then a memory leak is observed.
+        return;
+    }
+
     m_rkf45_solvers.clear();
     m_conlens.clear();
     m_initial_y.clear();
@@ -71,6 +77,8 @@ void FLT::prepareThreadContainers(int num_threads){
             interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
         }
     }
+    m_prepared_for_n_threads = num_threads;
+
 }
 
 void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){

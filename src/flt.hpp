@@ -25,10 +25,15 @@ private:
     std::vector<RKF45*> m_rkf45_solvers;
     BICUBIC_INTERP *m_interp_psi;
 
-    /// Flag for stating if the interpolating objects are prepared
+    /// Flags for stating if the interpolating objects are prepared
     bool m_prepared=false;
     bool m_interpolation_prepared=false;
     bool m_containers_prepared=false;
+
+    /// This integer holds information for how many threads we prepared the
+    /// objects. If we call with the same number then nothing should happen, as
+    /// this "thread preparation" is only preparing worker objects.
+    int m_prepared_for_n_threads=-1;
 
     /// Dimensions of the R, Z space.
     size_t m_NDIMR=-1;
