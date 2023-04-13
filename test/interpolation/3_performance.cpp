@@ -89,7 +89,7 @@ int main(){
 
     begin = std::chrono::high_resolution_clock::now();
     for (int i=0; i<N; i++){
-        naive_interp->debugGetValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
+        naive_interp->getAllValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);

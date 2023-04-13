@@ -8,179 +8,17 @@ double clip(double x, double lower, double upper){
 }
 
 
-void process_input_arrays(std::vector<double> x, std::vector<double> y,
-                         std::vector<std::vector<double>> f, double *out_x,
-                        double *out_y, double *out_f, double *out_fdx,
-                        double *out_fdy, double *out_fdxdy){
-    // Prepare the arrays for interpolation
-
-    int n_cols, n_rows, n_xy;
-    n_cols = x.size(); // Number of columns
-    n_rows = y.size(); // Number of rows
-    n_xy = n_rows * n_cols;
-
-
-
-    int i, j, k;
-    // Simply copy data
-    for (i=0; i<n_cols; i++){
-        out_x[i] = x[i];
-    }
-
-    for (j=0; j<n_rows; j++){
-        out_y[j] = y[j];
-    }
-    // n_rows is the number of rows. n_cols is the number of columns.
-    for (i=0; i<n_rows;i++){
-        for(j=0; j<n_cols;j++){
-            k = i * n_cols + j;
-            out_f[k] = f[i][j];
-        }
-    }
-
-    // Now the derivatives.
-    // Upper left border values
-    out_fdx[0] = 0.5 * (f[0][1] - f[0][0]);
-    out_fdy[0] = 0.5 * (f[1][0] - f[0][0]);
-    out_fdxdy[0] = 0.25 * (f[1][1] - f[0][1] - f[1][0] + f[0][0]);
-
-    // Upper right border values
-    k = n_cols - 1;
-    out_fdy[k] = 0.5 * (f[1][n_cols - 1] - f[0][n_cols - 1]);
-    out_fdx[k] = 0.5 * (f[0][n_cols - 1] - f[0][n_cols - 2]);
-    out_fdxdy[k] = 0.25 * (f[1][n_cols - 1] - f[0][n_cols - 1] - f[1][n_cols - 2] + f[0][n_cols - 2]);
-
-    // Lower left border values
-    k = (n_rows - 1) * n_cols;
-    out_fdx[k] = 0.5 * (f[n_rows - 1][1] - f[n_rows - 1][0]);
-    out_fdy[k] = 0.5 * (f[n_rows - 1][0] - f[n_rows - 2][0]);
-    out_fdxdy[k] = 0.25 * (f[n_rows - 1][1] - f[n_rows - 2][1] - f[n_rows - 1][0] + f[n_rows - 2][0]);
-
-    // Lower right border values
-    k = n_xy - 1;
-    out_fdx[k] = 0.5 * (f[n_rows - 1][n_cols - 1] - f[n_rows - 1][n_cols - 2]);
-    out_fdy[k] = 0.5 * (f[n_rows - 1][n_cols - 1] - f[n_rows - 2][n_cols - 1]);
-    out_fdxdy[k] = 0.25 * (f[n_rows - 1][n_cols - 1] - f[n_rows - 2][n_cols - 1] - f[n_rows - 1][n_cols - 2] + f[n_rows - 2][n_cols - 2]);
-
-
-    // Left and right border lines
-    for(int i=1; i<n_rows-1; i++){
-        k = i * n_cols;
-        // Forward derivative - left side
-        out_fdx[k]= 0.5 * (f[i][1] - f[i][0]);
-        out_fdy[k]= 0.5 * (f[i+1][0] - f[i-1][0]);
-        out_fdxdy[k]= 0.25 * (f[i+1][1] - f[i-1][1] - f[i+1][0] + f[i-1][0]);
-
-        // Backward derivative - right side
-        k = (i+1) * n_cols - 1;
-        out_fdx[k]  = 0.5 * (f[i][n_cols - 1] - f[i][n_cols - 2]);
-        out_fdy[k]  = 0.5 * (f[i+1][n_cols - 1] - f[i-1][n_cols - 1]);
-        out_fdxdy[k]= 0.25 * (f[i+1][n_cols - 1] - f[i-1][n_cols - 1] - f[i+1][n_cols - 2] + f[i-1][n_cols - 2]);
-    }
-
-    // Upper and bottom border lines
-    for(int j=1; j<n_cols-1;j++){
-        // Upper side
-        k = j;
-        out_fdx[k]= 0.5 * (f[0][j+1] - f[0][j-1]);
-        out_fdy[k]= 0.5 * (f[1][j] - f[0][j]);
-        out_fdxdy[k]= 0.25 * (f[1][j+1] - f[0][j+1] - f[1][j-1] + f[0][j-1]);
-
-        // Lower side
-        k = (n_rows - 1) * n_cols + j;
-        out_fdx[k] = 0.5 * (f[n_rows-1][j+1] - f[n_rows-1][j-1]);
-        out_fdy[k] = 0.5 * (f[n_rows-1][j] - f[n_rows-2][j]);
-        out_fdxdy[k] = 0.25 * (f[n_rows-1][j+1] - f[n_rows-2][j+1] - f[n_rows-1][j-1] + f[n_rows-2][j-1]);
-    }
-
-    // Centered finite differences.
-    // Now for the rest of the space
-    for(int i=1; i<n_rows-1;i++){
-        for(int j=1; j<n_cols-1;j++){
-            // fdx[i][j] = 0.5 *(f[i][j+1] - f[i][j-1]);
-            k = i * n_cols + j;
-            out_fdx[k] = 0.5 *(f[i][j+1] - f[i][j-1]);
-            out_fdy[k] = 0.5 *(f[i+1][j] - f[i-1][j]);
-            out_fdxdy[k] = 0.25 * (f[i+1][j+1] - f[i-1][j+1] - f[i+1][j-1] + f[i-1][j-1]);
-        }
-    }
-
-    // Higher order finite difference
-    for(int i=2; i<n_rows-2;i++){
-        for(int j=2; j<n_cols-2;j++){
-            k = i * n_cols + j;
-            out_fdx[k] = (-f[i][j+2] + 8.0 * f[i][j+1] - 8.0 * f[i][j-1] + f[i][j-2]) / 12.0;
-            out_fdy[k] = (-f[i+2][j] + 8.0 * f[i+1][j] - 8.0 * f[i-1][j] + f[i-2][j]) / 12.0;
-            out_fdxdy[k] = (f[i+2][j+2] - 8.0 * f[i+1][j+2] + 8.0 * f[i-1][j+2] - f[i-2][j+2] + \
-                             8.0 * (-f[i+2][j+1] + 8.0 * f[i+1][j+1] - 8.0 * f[i-1][j+1] + f[i-2][j+1]) - \
-                             8.0 * (-f[i+2][j-1] + 8.0 * f[i+1][j-1] - 8.0 * f[i-1][j-1] + f[i-2][j-1]) - \
-                             f[i+2][j-2] + 8.0 * f[i+1][j-2] - 8.0 * f[i-1][j-2] + f[i-2][j-2]) / 144.0;
-        }
-    }
-
-    // 6th order centered difference approximations
-    for(int i=3; i<n_rows-3;i++){
-        for(int j=3; j<n_cols-3;j++){
-            k = i * n_cols + j;
-            out_fdx[k] = (-f[i][j-3] + 9.0 * f[i][j-2] - 45.0 * f[i][j-1] + 45.0 * f[i][j+1] - 9.0 * f[i][j+2] + f[i][j+3]) / 60.0;
-            out_fdy[k] = (-f[i-3][j] + 9.0 * f[i-2][j] - 45.0 * f[i-1][j] + 45.0 * f[i+1][j] - 9.0 * f[i+2][j] + f[i+3][j]) / 60.0;
-
-            out_fdxdy[k] =    (-1.0 * (-f[i-3][j-3] + 9.0 * f[i-2][j-3] - 45.0 * f[i-1][j-3] + 45.0 * f[i+1][j-3] - 9.0 * f[i+2][j-3] + f[i+3][j-3]) + \
-                                9.0 * (-f[i-3][j-2] + 9.0 * f[i-2][j-2] - 45.0 * f[i-1][j-2] + 45.0 * f[i+1][j-2] - 9.0 * f[i+2][j-2] + f[i+3][j-2]) - \
-                               45.0 * (-f[i-3][j-1] + 9.0 * f[i-2][j-1] - 45.0 * f[i-1][j-1] + 45.0 * f[i+1][j-1] - 9.0 * f[i+2][j-1] + f[i+3][j-1]) + \
-                               45.0 * (-f[i-3][j+1] + 9.0 * f[i-2][j+1] - 45.0 * f[i-1][j+1] + 45.0 * f[i+1][j+1] - 9.0 * f[i+2][j+1] + f[i+3][j+1]) - \
-                                9.0 * (-f[i-3][j+2] + 9.0 * f[i-2][j+2] - 45.0 * f[i-1][j+2] + 45.0 * f[i+1][j+2] - 9.0 * f[i+2][j+2] + f[i+3][j+2]) + \
-                                1.0 * (-f[i-3][j+3] + 9.0 * f[i-2][j+3] - 45.0 * f[i-1][j+3] + 45.0 * f[i+1][j+3] - 9.0 * f[i+2][j+3] + f[i+3][j+3])) / 3600.0;
-        }
-    }
-
-    // 8th order centered difference approximation
-    for(int i=4; i<n_rows-4;i++){
-        for(int j=4; j<n_cols-4;j++){
-            k = i * n_cols + j;
-            out_fdx[k] = (3.0 * f[i][j-4] - 32.0 * f[i][j-3] + 168.0 * f[i][j-2] - 672.0 * f[i][j-1] + 672.0 * f[i][j+1] - 168.0 * f[i][j+2] + 32.0 * f[i][j+3] - 3.0 * f[i][j+4]) / 840.0;
-            out_fdy[k] = (3.0 * f[i-4][j] - 32.0 * f[i-3][j] + 168.0 * f[i-2][j] - 672.0 * f[i-1][j] + 672.0 * f[i+1][j] - 168.0 * f[i+2][j] + 32.0 * f[i+3][j] - 3.0 * f[i+4][j]) / 840.0;
-
-            out_fdxdy[k] =    (3.0 * (3.0 * f[i-4][j-4] - 32.0 * f[i-3][j-4] + 168.0 * f[i-2][j-4] - 672.0 * f[i-1][j-4] + 672.0 * f[i+1][j-4] - 168.0 * f[i+2][j-4] + 32.0 * f[i+3][j-4] - 3.0 * f[i+4][j-4]) - \
-                              32.0 * (3.0 * f[i-4][j-3] - 32.0 * f[i-3][j-3] + 168.0 * f[i-2][j-3] - 672.0 * f[i-1][j-3] + 672.0 * f[i+1][j-3] - 168.0 * f[i+2][j-3] + 32.0 * f[i+3][j-3] - 3.0 * f[i+4][j-3]) + \
-                             168.0 * (3.0 * f[i-4][j-2] - 32.0 * f[i-3][j-2] + 168.0 * f[i-2][j-2] - 672.0 * f[i-1][j-2] + 672.0 * f[i+1][j-2] - 168.0 * f[i+2][j-2] + 32.0 * f[i+3][j-2] - 3.0 * f[i+4][j-2]) - \
-                             672.0 * (3.0 * f[i-4][j-1] - 32.0 * f[i-3][j-1] + 168.0 * f[i-2][j-1] - 672.0 * f[i-1][j-1] + 672.0 * f[i+1][j-1] - 168.0 * f[i+2][j-1] + 32.0 * f[i+3][j-1] - 3.0 * f[i+4][j-1]) + \
-                             672.0 * (3.0 * f[i-4][j+1] - 32.0 * f[i-3][j+1] + 168.0 * f[i-2][j+1] - 672.0 * f[i-1][j+1] + 672.0 * f[i+1][j+1] - 168.0 * f[i+2][j+1] + 32.0 * f[i+3][j+1] - 3.0 * f[i+4][j+1]) - \
-                             168.0 * (3.0 * f[i-4][j+2] - 32.0 * f[i-3][j+2] + 168.0 * f[i-2][j+2] - 672.0 * f[i-1][j+2] + 672.0 * f[i+1][j+2] - 168.0 * f[i+2][j+2] + 32.0 * f[i+3][j+2] - 3.0 * f[i+4][j+2]) + \
-                              32.0 * (3.0 * f[i-4][j+3] - 32.0 * f[i-3][j+3] + 168.0 * f[i-2][j+3] - 672.0 * f[i-1][j+3] + 672.0 * f[i+1][j+3] - 168.0 * f[i+2][j+3] + 32.0 * f[i+3][j+3] - 3.0 * f[i+4][j+3]) - \
-                               3.0 * (3.0 * f[i-4][j+4] - 32.0 * f[i-3][j+4] + 168.0 * f[i-2][j+4] - 672.0 * f[i-1][j+4] + 672.0 * f[i+1][j+4] - 168.0 * f[i+2][j+4] + 32.0 * f[i+3][j+4] - 3.0 * f[i+4][j+4])) / 705600.0;
-        }
-    }
-}
-
-BICUBIC_INTERP::BICUBIC_INTERP(){
-
-};
-
 void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
                                std::vector<std::vector<double>> f){
-
     /*Copy the input data for interpolation*/
 
     /*Reset the vectors*/
-
     m_x.clear();
     m_y.clear();
     m_f.clear();
     m_fdx.clear();
     m_fdy.clear();
     m_fdxdy.clear();
-
-    /*Also set the coefficients to zero*/
-    // m_a.clear();
-    // m_a.resize(16);
-    // m_b.clear();
-    // m_b.resize(16);
-    // std::fill(m_a.begin(), m_a.end(), 0);
-    // std::fill(m_b.begin(), m_b.end(), 0);
-
-    // m_cell_row = -1;
-    // m_cell_col = -1;
 
     /*Copy the vectors.*/
     m_x = x;
@@ -208,40 +46,39 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 
     // Now calcuate the derivatives
     // The following is the direction of Rows and Columns!!!
-    // o-------->> X
+    // o---------> X (R)
     // |
     // |
     // |
     // |
     // v
-    // Y
-    //m_fdx is derivative in R direciton
+    // Y (Z)
+    // m_fdx is the partial derivative in R direciton
     m_fdx.resize(n_rows, std::vector<double>(n_cols));
-    //m_fdy is derivative in Z direction
+    // m_fdy is the partial derivative in Z direction
     m_fdy.resize(n_rows, std::vector<double>(n_cols));
-
+    // m_fdxdy is the partial mixed derivative
     m_fdxdy.resize(n_rows, std::vector<double>(n_cols));
 
-    // Upper left border values
+    // Upper left border values - forward finite difference
     m_fdx[0][0] = 0.5 * (m_f[0][1] - m_f[0][0]);
     m_fdy[0][0] = 0.5 * (m_f[1][0] - m_f[0][0]);
     m_fdxdy[0][0] = 0.25 * (m_f[1][1] - m_f[0][1] - m_f[1][0] + m_f[0][0]);
 
-    // Upper right border values
+    // Upper right border values - backward finite difference
     m_fdx[0][n_cols - 1] = 0.5 * (m_f[0][n_cols - 1] - m_f[0][n_cols - 2]);
     m_fdy[0][n_cols - 1] = 0.5 * (m_f[1][n_cols - 1] - m_f[0][n_cols - 1]);
     m_fdxdy[0][n_cols - 1] = 0.25 * (m_f[1][n_cols - 1] - m_f[0][n_cols - 1] - m_f[1][n_cols - 2] + m_f[0][n_cols - 2]);
 
-    // Lower left border values
+    // Lower left border values - forward finite difference
     m_fdx[n_rows - 1][0] = 0.5 * (m_f[n_rows - 1][1] - m_f[n_rows - 1][0]);
     m_fdy[n_rows - 1][0] = 0.5 * (m_f[n_rows - 1][0] - m_f[n_rows - 2][0]);
     m_fdxdy[n_rows - 1][0] = 0.25 * (m_f[n_rows - 1][1] - m_f[n_rows - 2][1] - m_f[n_rows - 1][0] + m_f[n_rows - 2][0]);
 
-    // Lower right border values
+    // Lower right border values - backward finite difference
     m_fdx[n_rows - 1][n_cols - 1] = 0.5 * (m_f[n_rows - 1][n_cols - 1] - m_f[n_rows - 1][n_cols - 2]);
     m_fdy[n_rows - 1][n_cols - 1] = 0.5 * (m_f[n_rows - 1][n_cols - 1] - m_f[n_rows - 2][n_cols - 1]);
     m_fdxdy[n_rows - 1][n_cols - 1] = 0.25 * (m_f[n_rows - 1][n_cols - 1] - m_f[n_rows - 2][n_cols - 1] - m_f[n_rows - 1][n_cols - 2] + m_f[n_rows - 2][n_cols - 2]);
-
 
     // Left and right border lines
     for(int i=1; i<n_rows-1; i++){
@@ -250,7 +87,6 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
         // Centered difference
         m_fdy[i][0] = 0.5 * (m_f[i+1][0] - m_f[i-1][0]);
         m_fdxdy[i][0] = 0.25 * (m_f[i+1][1] - m_f[i-1][1] - m_f[i+1][0] + m_f[i-1][0]);
-
         // Backward difference - right side
         m_fdx[i][n_cols - 1]   = 0.5 * (m_f[i][n_cols - 1] - m_f[i][n_cols - 2]);
         m_fdy[i][n_cols - 1]   = 0.5 * (m_f[i+1][n_cols - 1] - m_f[i-1][n_cols - 1]);
@@ -327,7 +163,6 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
                              3.0 * (3.0 * m_f[i-4][j+4] - 32.0 * m_f[i-3][j+4] + 168.0 * m_f[i-2][j+4] - 672.0 * m_f[i-1][j+4] + 672.0 * m_f[i+1][j+4] - 168.0 * m_f[i+2][j+4] + 32.0 * m_f[i+3][j+4] - 3.0 * m_f[i+4][j+4])) / 705600.0;
         }
     }
-
 };
 
 void BICUBIC_INTERP::prepareContainers(int number_of_omp_threads){
@@ -348,124 +183,73 @@ void BICUBIC_INTERP::rcin(double x, double y, double &out_cell_x,
 
     // Calculate the position in cell
     cellx = (x - m_x[ind_x]) / m_dx;
-#ifndef NDEBUG
-    printf("Calculating index and position in cell\n");
-    fflush(stdout);
-    printf("Now for x\n");
-    fflush(stdout);
-#endif
-    // First clipping.
-    // if (cellx > 1) {
-    //     cellx = 0;
-    //     ind_x = (ind_x + 1) % m_nx;
-    // }
     // Upper range clip
     if (ind_x >= m_nx - 1){
-        ind_x = ind_x - 1;
+        ind_x = m_nx - 1;
         cellx = 1.0;
     }
-#ifndef NDEBUG
-    printf("cellx=%f\n", cellx);
-    printf("nx=%d\n", m_nx);
-    fflush(stdout);
-    printf("Now for y\n");
-    fflush(stdout);
-#endif
 
+    // Calculate the position in cell
     celly = (y - m_y[ind_y]) / m_dy;
-#ifndef NDEBUG
-    printf("celly=%f\n", celly);
-    printf("ny=%d\n", m_ny);
-    fflush(stdout);
-#endif
-    // if (celly > 1) {
-    //     celly = 0;
-    //     ind_y = (ind_y + 1) % m_ny;
-    // }
     // Upper range clip
     if (ind_y >= m_ny - 1){
-        ind_y = ind_y - 1;
+        ind_y = m_ny - 1;
         celly = 1.0;
     }
-#ifndef NDEBUG
-    printf("Calculated in cell relative position: %f %f\n", cellx, celly);
-    fflush(stdout);
-    printf("Calculated cell index: %d %d\n", ind_x, ind_y);
-    fflush(stdout);
-#endif
 
     out_cell_x = cellx;
     out_cell_y = celly;
     if (ind_x == m_cell_col && ind_y == m_cell_row){
-            // We are in the same cell, no recomputation needed.
-            return;
-        }
+        // We are in the same cell, no recomputation needed.
+        return;
+    }
     m_cell_col = ind_x;
     m_cell_row = ind_y;
     interpolate(m_cell_row, m_cell_col);
 };
 
 void BICUBIC_INTERP::interpolate(int r, int c){
-    /*Recalculate the m_a coefficients.*/
-
     // Calculate the m_a coefficients.
 
     // Take into account that the array indexes 0,0 starts from upper left
-    // corner
+    // corner!!
 
-    int rp1; //rm1, rp2;
-    int cp1; //cm1, cp2;
+    int rp1;
+    int cp1;
 
     double b[16];
 
+    // r, c, rp1, cp1 are basically the corners of the cell.
     rp1 = r + 1;
     cp1 = c + 1;
 
-    // rp2 = r + 2;
-    // cp2 = c + 2;
+    // Setting the boundary values that are used to compute the coefficients.
 
-    /*First 4 values is the value of the function in the corner.*/
+    // First 4 values are the values of the function.
     b[0] =  m_f[r][c];
     b[1] =  m_f[r][cp1];
     b[2] =  m_f[rp1][c];
     b[3] =  m_f[rp1][cp1];
-    /*First partial derivative by x*/
-    // b[4] =  0.5*(m_f[rp1][c]   - m_f[rm1][c]);
-    // b[5] =  0.5*(m_f[rp2][c]   - m_f[r][c]);
-    // b[6] =  0.5*(m_f[rp1][cp1] - m_f[rm1][cp1]);
-    // b[7] =  0.5*(m_f[rp2][cp1] - m_f[r][cp1]);
+    // First partial derivative by x
     b[4] =  m_fdx[r][c];
     b[5] =  m_fdx[r][cp1];
     b[6] =  m_fdx[rp1][c];
     b[7] =  m_fdx[rp1][cp1];
-
     /*First partial derivative by y*/
-    // b[8] =  0.5*(m_f[r][cp1]   - m_f[r][cm1]);
-    // b[9] =  0.5*(m_f[rp1][cp1] - m_f[rp1][cm1]);
-    // b[10] = 0.5*(m_f[r][cp2]   - m_f[r][c]);
-    // b[11] = 0.5*(m_f[rp1][cp2] - m_f[rp1][c]);
     b[8] =  m_fdy[r][c];
     b[9] =  m_fdy[r][cp1];
     b[10] = m_fdy[rp1][c];
     b[11] = m_fdy[rp1][cp1];
-
-    /*First partial derivative by xy*/
-    // b[12] = 0.25*(m_f[rp1][cp1] - m_f[rm1][cp1] - m_f[rp1][cm1] + m_f[rm1][cm1]);
-    // b[13] = 0.25*(m_f[rp2][cp1] - m_f[r][cp1] - m_f[rp2][cm1] + m_f[r][cm1]);
-    // b[14] = 0.25*(m_f[rp1][cp2] - m_f[rm1][cp2] - m_f[rp1][c] + m_f[rm1][c]);
-    // b[15] = 0.25*(m_f[rp2][cp2] - m_f[r][cp2] - m_f[rp2][c] + m_f[r][c]);
+    /*Mixed partial derivative by xy*/
     b[12] = m_fdxdy[r][c];
     b[13] = m_fdxdy[r][cp1];
     b[14] = m_fdxdy[rp1][c];
     b[15] = m_fdxdy[rp1][cp1];
 
-    // for(int i=0;i<16;i++){
-    //     m_a[i] = 0;
-    //     for(int j=0;j<16;j++){
-    //         m_a[i] = m_a[i] + bicubic_A[i][j] * b[j];
-    //     }
-    // }
-
+    // Unrolled for loop for calculating the m_a coefficients! When solving the
+    // system of linear equations with the extension for the interpolant
+    // function:
+    // f(x, y) = \sum_{i=0}^{3} \sum_{j=0}^{3} a_{i, j}  x^{i}  y^{j}
     m_a[0] = b[0];
     m_a[1] = b[4];
     m_a[2] = -3.0 * b[0]+3.0 * b[1]-2.0 * b[4]-1.0 * b[5];
@@ -490,6 +274,8 @@ void BICUBIC_INTERP::getValues(double x, double y, double &val, double &valdx,
 #ifndef NDEBUG
     printf("GetValues %f %f\n", x, y);
 #endif
+
+    /// Output
     val = 0;
     valdx = 0;
     valdy = 0;
@@ -591,9 +377,9 @@ void BICUBIC_INTERP::getValues(double x, double y, double &val, double &valdx,
 
 };
 
-void BICUBIC_INTERP::debugGetValues(double x, double y, double &val,
-                                    double &valdx, double &valdy,
-                                    double &valdxdy){
+void BICUBIC_INTERP::getAllValues(double x, double y, double &val,
+                                  double &valdx, double &valdy,
+                                  double &valdxdy){
     // Function for obtaining values inside the X, Y domain.
 #ifndef NDEBUG
     printf("GetValues %f %f\n", x, y);

@@ -18,7 +18,7 @@ set(ALGLIB_SOURCES
 add_library(alglib_static STATIC ${ALGLIB_SOURCES})
 
 # add the executable
-foreach(target 1_accuracy 2_accuracy_with_flt 4_derivative_eval 5_derivative_eval_with_flt 7_test_rkf45_stability 8_simple_test_case)
+foreach(target 1_accuracy 2_accuracy_with_flt 4_derivative_eval 5_derivative_eval_with_flt 6_check_values 7_test_rkf45_stability 8_simple_test_case)
     add_executable(${target} ${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp)
     target_link_libraries(${target} flt_static)
 

@@ -70,7 +70,7 @@ int main(){
         buff_z = fwp17_z[i];
         buff_phi = fwp17_phi[i];
 
-        obj->debug_getValues(buff_r, buff_z, naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy, 3);
+        obj->getPFValues(buff_r, buff_z, naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy, 3);
         spline2ddiff(alglib_interp, buff_r, buff_z, alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
 
         printf("Point %f %f\n", buff_r, buff_z);

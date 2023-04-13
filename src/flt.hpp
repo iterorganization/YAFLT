@@ -381,7 +381,7 @@ public:
     ///              when using OpenMP
     void prepareThreadContainers(int n=1);
 
-    void debug_getValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index=0);
+    void getPFValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index=0);
 };
 
 #endif //FLT_H

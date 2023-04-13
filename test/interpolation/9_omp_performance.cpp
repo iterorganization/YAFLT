@@ -99,7 +99,7 @@ int main(){
     begin = std::chrono::high_resolution_clock::now();
     tid = 0;
     for (int i=0; i<N; i++){
-        naive_interp->debugGetValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
+        naive_interp->getAllValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
@@ -115,7 +115,7 @@ int main(){
     //     offset = tid * chunk_N;
     //     for (int i=0; i<chunk_N; i++){
     //         index = offset + i;
-    //         naive_interp->debugGetValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy, tid);
+    //         naive_interp->getAllValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy, tid);
     //     }
     // }
 
@@ -131,7 +131,7 @@ int main(){
         offset = tid * chunk_N;
         for (int i=0; i<chunk_N; i++){
             index = offset + i;
-            naive_interpolators[tid]->debugGetValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy);
+            naive_interpolators[tid]->getAllValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy);
         }
     }
 

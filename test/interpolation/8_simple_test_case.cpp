@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     printf("dx=%.4f\n", double(dx)); // EXPECTED: 0.5000
     printf("dy=%.4f\n", double(dy)); // EXPECTED: 2.0000
     // Calculate values
-    naive_interp->debugGetValues(vx, vy, v, dx, dy, dxy);
+    naive_interp->getAllValues(vx, vy, v, dx, dy, dxy);
     printf("v=%.4f\n", double(v)); // EXPECTED: 1.0625
     printf("dx=%.4f\n", double(dx)); // EXPECTED: 0.5000
     printf("dy=%.4f\n", double(dy)); // EXPECTED: 2.0000

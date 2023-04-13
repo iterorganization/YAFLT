@@ -34,6 +34,11 @@ void FLT::prepareThreadContainers(int num_threads){
     // Subsequently call the Embree allocation to do the same as structs are
     // populated during RTC and cannot be shared between threads.
 
+    if (num_threads <= 0) {
+        /// TODO: Throw an exception or error code
+        return;
+    }
+
     if (num_threads == m_prepared_for_n_threads) {
         /// Nothing to do, we already have enough workers prepared. If this
         /// function is called to many times, then a memory leak is observed.
@@ -71,10 +76,33 @@ void FLT::prepareThreadContainers(int num_threads){
     m_interp_psi->prepareContainers(num_threads);
     m_containers_prepared = true;
     if (m_interpolation_prepared){
-        // Set the interpolator data
-        for (int i=0;i<m_rkf45_solvers.size();i++){
+        // We only need to process the equilibrium arrays once!
+        BICUBIC_INTERP* base_interp = m_rkf45_solvers[0]->get_interpolator();
+        base_interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+
+        // Now just copy the arrays to other interpolator objects
+        for (int i=1;i<m_rkf45_solvers.size();i++){
             BICUBIC_INTERP* interp = m_rkf45_solvers[i]->get_interpolator();
-            interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+            // interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
+            interp->m_x = base_interp->m_x;
+            interp->m_y = base_interp->m_y;
+            interp->m_f = base_interp->m_f;
+            interp->m_fdx = base_interp->m_fdx;
+            interp->m_fdy = base_interp->m_fdy;
+            interp->m_fdxdy = base_interp->m_fdxdy;
+
+            interp->m_nx = base_interp->m_nx;
+            interp->m_ny = base_interp->m_ny;
+
+            interp->m_minx = base_interp->m_minx;
+            interp->m_maxx = base_interp->m_maxx;
+            interp->m_dx = base_interp->m_dx;
+
+            interp->m_miny = base_interp->m_miny;
+            interp->m_maxy = base_interp->m_maxy;
+            interp->m_dy = base_interp->m_dy;
+
+
         }
     }
     m_prepared_for_n_threads = num_threads;
@@ -734,8 +762,8 @@ double FLT::getPoloidalFlux(double r, double z){
     return flux;
 }
 
-void FLT::debug_getValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index){
-    m_interp_psi->debugGetValues(r, z, val, valdx, valdy, valdxdy);
+void FLT::getPFValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index){
+    m_interp_psi->getAllValues(r, z, val, valdx, valdy, valdxdy);
 }
 
 void FLT::setEmbreeObj(EmbreeAccell* accellObj){

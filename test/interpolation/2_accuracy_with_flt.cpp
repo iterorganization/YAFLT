@@ -72,7 +72,7 @@ int main(){
         print_dxdy=false;
         buff_x = rmin + rdiff * rand() / RAND_MAX;
         buff_y = zmin + zdiff * rand() / RAND_MAX;
-        obj->debug_getValues(buff_x, buff_y, naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy);
+        obj->getPFValues(buff_x, buff_y, naive_fval, naive_fvaldx, naive_fvaldy, naive_fvaldxdy);
         spline2ddiff(alglib_interp, buff_x, buff_y, alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
         buff = std::fabs(naive_fval - alglib_fval) / alglib_fval;
         if (buff > diff) {
