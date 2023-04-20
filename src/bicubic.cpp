@@ -181,11 +181,19 @@ void BICUBIC_INTERP::rcin(double x, double y, double &out_cell_x,
     ind_x = (int) ((x - m_minx)/ m_dx);
     ind_y = (int) ((y - m_miny)/ m_dy);
 
+#ifndef NDEBUG
+    printf("Indexes %d %d\n", ind_x, ind_y);
+#endif
+
+    // When clipping into the corners, make sure that you clip into the last
+    // cell but with the relative position put into the corner. Otherwise you
+    // will get segfault if you set the index to the last cell.
+
     // Calculate the position in cell
     cellx = (x - m_x[ind_x]) / m_dx;
     // Upper range clip
     if (ind_x >= m_nx - 1){
-        ind_x = m_nx - 1;
+        ind_x = m_nx - 2;
         cellx = 1.0;
     }
 
@@ -193,7 +201,7 @@ void BICUBIC_INTERP::rcin(double x, double y, double &out_cell_x,
     celly = (y - m_y[ind_y]) / m_dy;
     // Upper range clip
     if (ind_y >= m_ny - 1){
-        ind_y = m_ny - 1;
+        ind_y = m_ny - 2;
         celly = 1.0;
     }
 
@@ -205,6 +213,11 @@ void BICUBIC_INTERP::rcin(double x, double y, double &out_cell_x,
     }
     m_cell_col = ind_x;
     m_cell_row = ind_y;
+
+#ifndef NDEBUG
+    printf("Indexes %d %d\n", m_cell_row, m_cell_col);
+    printf("Relative location %f %f\n", cellx, celly);
+#endif
     interpolate(m_cell_row, m_cell_col);
 };
 
