@@ -1,5 +1,5 @@
-#ifndef BICUBIC_H
-#define BICUBIC_H
+#ifndef BICUBIC_VECTOR_H
+#define BICUBIC_VECTOR_H
 
 #include <vector>
 
@@ -7,7 +7,7 @@ void process_input_arrays(std::vector<double> x, std::vector<double> y,
                           std::vector<std::vector<double>> f, double *out_x,
                           double *out_y, double *out_f, double *out_fdx,
                           double *out_fdy, double *out_fdxdy);
-class BICUBIC_INTERP
+class BICUBIC_INTERP_OMP_TEST
 {
 private:
     /// Container for the coefficients. These coefficients are calculated for
@@ -16,21 +16,22 @@ private:
 
     /// To avoid recalculating the m_a coefficients, we remember the last cell
     /// we were in case the new query point lies inside the same cell.
-    int m_cell_row, m_cell_col;
+    std::vector<int> m_cell_row, m_cell_col;
 
-
+    int fs_padd;
 public:
     /// The Recompute Coefficients If Needed function. When calling the
     /// getValues or getAllValues function, the index of the cell where the
     /// queried point lies has to be computed. Then this function checks if for
     /// that cell we already have the interpolation coefficients. If not then
     /// the interpolate function is called.
-    void rcin(double x, double y, double &out_cell_x, double &out_cell_y);
+    void rcin(double x, double y, double &out_cell_x, double &out_cell_y,
+              int openmp_id=1);
 
     /// Actually interpolates the function by generating the interpolant
     /// coefficients stored in m_a. These coefficients are then used when
     /// calling getValues function.
-    void interpolate(int r, int c);
+    void interpolate(int r, int c, int openmp_id=1);
     /// Rectilinear weights. Obtained from the input X- and Y-axis arrays and
     /// are needed when obtaining the partial derivatives.
     double m_dx=1.0, m_dy=1.0;
@@ -53,8 +54,8 @@ public:
     std::vector<std::vector<double>> m_fdy;
     std::vector<std::vector<double>> m_fdxdy;
 
-    BICUBIC_INTERP(){};
-    ~BICUBIC_INTERP(){};
+    BICUBIC_INTERP_OMP_TEST(){};
+    ~BICUBIC_INTERP_OMP_TEST(){};
 
     /// Resizes the vectors so that OpenMP threads will access their respective
     /// thread related storages.
@@ -74,12 +75,12 @@ public:
     /// the numerical domain defined by the function domain, it is
     /// automatically clipped o the border.
     void getValues(double x, double y, double &val, double &valdx,
-                   double &valdy);
+                   double &valdy, int openmp_id=1);
 
     /// Same as getValues, except it also provides the second mixed partial
     /// derivative.
     void getAllValues(double x, double y, double &val, double &valdx,
-                      double &valdy, double &valdxdy);
+                      double &valdy, double &valdxdy, int openmp_id=1);
 
 };
-#endif /*BICUBIC_H*/
+#endif /*BICUBIC_VECTOR_H*/
