@@ -1,11 +1,3 @@
-#include <cstdlib>
-#include <iostream>
-#include <iomanip>
-#include <cmath>
-#include <ctime>
-
-using namespace std; /*Will need to clean this sometime*/
-
 #include<flt.hpp>
 #include<rkf45.hpp>
 
@@ -582,36 +574,36 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
   // if ( neqn < 1 )
   // {
   //   flag_return = 8;
-  //   cerr << "\n";
-  //   cerr << "R8_RKF45 - Fatal error!\n";
-  //   cerr << "  Invalid input value of NEQN.\n";
+    // std::cerr << "\n";
+    // std::cerr << "R8_RKF45 - Fatal error!\n";
+    // std::cerr << "  Invalid input value of NEQN.\n";
   //   return flag_return;
   // }
 
   if ( (*relerr) < 0.0 )
   {
     flag_return = 8;
-    cerr << "\n";
-    cerr << "R8_RKF45 - Fatal error!\n";
-    cerr << "  Invalid input value of RELERR.\n";
+    // std::cerr << "\n";
+    // std::cerr << "R8_RKF45 - Fatal error!\n";
+    // std::cerr << "  Invalid input value of RELERR.\n";
     return flag_return;
   }
 
   if ( abserr < 0.0 )
   {
     flag_return = 8;
-    cerr << "\n";
-    cerr << "R8_RKF45 - Fatal error!\n";
-    cerr << "  Invalid input value of ABSERR.\n";
+    // std::cerr << "\n";
+    // std::cerr << "R8_RKF45 - Fatal error!\n";
+    // std::cerr << "  Invalid input value of ABSERR.\n";
     return flag_return;
   }
 
   if ( flag_return == 0 || 8 < flag_return  || flag_return < -2 )
   {
     flag_return = 8;
-    cerr << "\n";
-    cerr << "R8_RKF45 - Fatal error!\n";
-    cerr << "  Invalid input.\n";
+    // std::cerr << "\n";
+    // std::cerr << "R8_RKF45 - Fatal error!\n";
+    // std::cerr << "  Invalid input.\n";
     return flag_return;
   }
 
@@ -646,20 +638,20 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
       }
       else if ( m_kflag == 5 && abserr == 0.0 )
       {
-        cerr << "\n";
-        cerr << "R8_RKF45 - Fatal error!\n";
-        cerr << "  KFLAG = 5 and ABSERR = 0.0\n";
+        // std::cerr << "\n";
+        // std::cerr << "R8_RKF45 - Fatal error!\n";
+        // std::cerr << "  KFLAG = 5 and ABSERR = 0.0\n";
         exit ( 1 );
       }
       else if ( m_kflag == 6 && (*relerr) <= m_relerr_save && abserr <= m_abserr_save )
       {
-        cerr << "\n";
-        cerr << "R8_RKF45 - Fatal error!\n";
-        cerr << "  KFLAG = 6 and\n";
-        cerr << "  RELERR <= RELERR_SAVE and\n";
-        cerr << "  " << (*relerr) << " <= " << m_relerr_save << "\n";
-        cerr << "  ABSERR <= ABSERR_SAVE\n";
-        cerr << "  " << abserr << " <= " << m_abserr_save << "\n";
+        // std::cerr << "\n";
+        // std::cerr << "R8_RKF45 - Fatal error!\n";
+        // std::cerr << "  KFLAG = 6 and\n";
+        // std::cerr << "  RELERR <= RELERR_SAVE and\n";
+        // std::cerr << "  " << (*relerr) << " <= " << m_relerr_save << "\n";
+        // std::cerr << "  ABSERR <= ABSERR_SAVE\n";
+        // std::cerr << "  " << abserr << " <= " << m_abserr_save << "\n";
         exit ( 1 );
       }
     }
@@ -699,11 +691,11 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
 //
       else
       {
-        cerr << "\n";
-        cerr << "R8_RKF45 - Fatal error!\n";
-        cerr << "  Integration cannot be continued.\n";
-        cerr << "  The user did not respond to the output\n";
-        cerr << "  value FLAG = 5, 6, 7, or 8.\n";
+        // std::cerr << "\n";
+        // std::cerr << "R8_RKF45 - Fatal error!\n";
+        // std::cerr << "  Integration cannot be continued.\n";
+        // std::cerr << "  The user did not respond to the output\n";
+        // std::cerr << "  value FLAG = 5, 6, 7, or 8.\n";
         exit ( 1 );
         //flag_return = 2;
         //flag_return = 1;

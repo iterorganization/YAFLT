@@ -234,26 +234,12 @@ bool FLT::prepareInterpolation(){
 
     if (m_containers_prepared){
         // Set the Arrays
-        for (int i=0;i<m_rkf45_solvers.size();++i){
+        for (unsigned long i=0;i<m_rkf45_solvers.size();++i){
             BICUBIC_INTERP* interp = m_rkf45_solvers[i]->get_interpolator();
             interp->setArrays(m_r_points, m_z_points, m_reshaped_psi);
         }
     }
     return true;
-}
-
-void FLT::r8_flt(double t, double y[2], double yp[2]){
-    // Derivative function for the RKF45. It evaluates the ratio between the
-    // (R, Z) magnetic components and the toroidal magnetic component in the
-    // cylindrical coordinate system.
-    double derivFluxdX, derivFluxdY, factor;
-
-    m_interp_psi->getValues(y[0] - m_r_move, y[1] - m_z_move, factor,
-                            derivFluxdX, derivFluxdY);
-
-    factor = y[0] / m_vacuum_fpol;
-    yp[0] = - derivFluxdY * factor;
-    yp[1] =   derivFluxdX * factor;
 }
 
 void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
@@ -348,8 +334,6 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
         // major radius of the element and make sure that there are at least 2
         // steps between the origin point and the self avoiding intersection length
         pre_t_step = std::asin(0.1 * m_self_intersection_avoidance_length / y[0]) * direction;
-
-
 
         while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
             ox = y[0] * cos(t_offset + t);

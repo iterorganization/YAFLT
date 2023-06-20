@@ -1,3 +1,4 @@
+
 # L2G C++
 
 ## Introduction
@@ -11,16 +12,36 @@ In order to build it, CMake can be used. Embree is the only dependency that is
 required and it is found via CMake Find functions.
 
 
-## Debug build CMake
+## Debug build CMake for IDE editor
 
-In order to have LSP-clangd functionality in editors for easier programming, we
-need to configure the project in Debug configuration with the flag
-CMAKE_EXPORT_COMPILE_COMMANDS=ON.
+In case you are using an editor with LSP plugins or functionality and you have
+installed the LSP-clangd plugin, the following steps has to be performed in
+order to have the LSP-clangd enhanced experience.
+
+
+
+### Generate the compile build JSON file
+
+When compiling pass the the flag ``-DCMAKE_EXPORT_COMPILE_COMMANDS=ON``. This
+will generate a JSON file that gives the LSP information on compilation steps
+and flags used.
 
 ```
 cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Debug /path/to/source
 ```
 
-Then run the following command to get the JSON file LSP-clangd is using:
+### Process the JSON file for LSP-clangd
 
+For this you need to install the ``compdb`` python package
+
+```
+pip install compdb
+```
+
+When you have the CMake build output file, process it with the ``compdb``
+command. The new file has to be positioned in the sources, so that LSP-clangd
+registers it.
+
+```
 compdb -p /path/to/build/ list > /path/to/source/compile_commands.json
+```

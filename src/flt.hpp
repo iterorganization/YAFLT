@@ -314,21 +314,6 @@ public:
     /// intersected triangle.
     std::vector<int> m_prim_hit_ids;
 
-    /// Derivative function for the RKF45 object. Since the FL are traced in the
-    /// parametric time or toroidal angle, the values stored in the derivative
-    /// variable yp yield the ratio between the poloidal components of the
-    /// magnetic field and the toroidal components of the magnetic field
-    /// (tan of the angle between the components).
-    /// The derivative values for the direction in the (R, Z) space
-    /// respectfully.
-    /// \f[\frac{d s}{d R} = - \frac{d \Psi}{d Z} * \frac{R}{Fpol}\f]
-    /// \f[\frac{d s}{d Z} =   \frac{d \Psi}{d R} * \frac{R}{Fpol}\f]
-    /// @param[in] t is the parametric time, in this case toroidal angle
-    /// @param[in] y contains the current location of the FL on the R,Z map
-    /// @param[in,out] yp holds the derivative values for the next step in
-    ///                   solving
-    /// @param[in] omp_thread is the OpenMP thread.
-    void r8_flt(double t, double y[2], double yp[2]);
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad)
     /// return the poloidal and toroidal component of the magnetic field.
     /// @param[in] r is the radial position of a point
