@@ -97,6 +97,8 @@ dynamically and can be operated by users of higher level interfaces.
 
 ## Build
 
+### Linux
+
 In order to build L2G_cpp the following packages are required (sub-dependencies
 are not written):
 
@@ -114,4 +116,33 @@ cd build
 cmake .. -DCMAKE_INSTALL_PREFIX=path/to/install
 make -j8
 make install
+```
+
+### Windows
+
+In order to build on windows you are required to install the Microsoft MSVC
+compiler, either part of visual studio or other ways.
+
+As with Linux you require the following libraries:
+
+ - Embree >= 3.12.2
+ - CMake >= 3.12.2
+
+Since this will be a static compilation, you can download the Embree library
+and simply tell CMake where the CMake configuration files are located.
+
+```console
+cmake -A x64 -DCMAKE_PREFIX_PATH=c:\path\to\embree\cmake\files -DCMAKE_INSTALL_PREFIX=c:\path\to\installation -B"Path\To\Build\directory" -S"Path\to\source\directry"
+```
+
+Then run the following lines for building, cleaning and installing
+
+
+```console
+# To build
+cmake --build c:\path\to\build --target ALL_BUILD --config Release # --parallel $CPUS
+# To clean
+cmake --build c:\path\to\build --target clean --config Release
+# To install
+cmake --build c:\path\to\build --target install --config Release
 ```

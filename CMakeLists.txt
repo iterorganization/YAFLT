@@ -35,7 +35,7 @@ if(FLT_BUILD_EXAMPLES)
 endif()
 
 # Tests
-if(FLT_BUILD_EXAMPLES)
+if(FLT_BUILD_TESTS)
     add_subdirectory(test)
 endif()
 
