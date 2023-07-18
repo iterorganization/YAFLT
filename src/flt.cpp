@@ -45,6 +45,11 @@ void FLT::prepareThreadContainers(int num_threads){
         return;
     }
 
+    // Clear the memory
+    for (int i=0; i < m_rkf45_solvers.size(); i++){
+        delete m_rkf45_solvers[i];
+    }
+
     m_rkf45_solvers.clear();
     m_conlens.clear();
     m_initial_y.clear();

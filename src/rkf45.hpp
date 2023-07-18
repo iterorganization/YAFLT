@@ -21,6 +21,7 @@ private:
 
     // Externally set variables
     BICUBIC_INTERP *m_interp_psi;
+    bool m_interpolator_set=false;
     int m_omp_thread=0;
     double m_r_move = 0.0;
     double m_z_move = 0.0;
@@ -28,11 +29,11 @@ private:
 
 public:
     RKF45();
-    ~RKF45(){};
+    ~RKF45(){if (m_interpolator_set){delete m_interp_psi;}};
     void set_r_move(double r_move){m_r_move = r_move;};
     void set_z_move(double z_move){m_z_move = z_move;};
     void set_vacuum_fpol(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
-    void set_interpolator(BICUBIC_INTERP *interp){m_interp_psi = interp;};
+    void set_interpolator(BICUBIC_INTERP *interp){m_interp_psi = interp;m_interpolator_set=true;};
     BICUBIC_INTERP* get_interpolator(){return m_interp_psi;};
     void set_omp_thread(int omp_thread){m_omp_thread=omp_thread;};
     void r8_flt(double t, double y[2], double yp[2]);

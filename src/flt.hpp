@@ -196,7 +196,6 @@ public:
     /// Sets the poloidal current value (Bt R) in vacuum. Units (m T)
     /// @param[in] vacuum_fpol is the F=Bt*R value in vacuum.
     void setVacuumFPOL(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
-    double getVacuumFPOL(double vacuum_fpol){return m_vacuum_fpol;};
 
     /// Sets the plasma shift in (m, m)
     /// @param[in] r_move is the radial shift.

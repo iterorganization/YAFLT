@@ -652,7 +652,7 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
         // std::cerr << "  " << (*relerr) << " <= " << m_relerr_save << "\n";
         // std::cerr << "  ABSERR <= ABSERR_SAVE\n";
         // std::cerr << "  " << abserr << " <= " << m_abserr_save << "\n";
-        exit ( 1 );
+        exit ( 2 );
       }
     }
 //
@@ -696,7 +696,7 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
         // std::cerr << "  Integration cannot be continued.\n";
         // std::cerr << "  The user did not respond to the output\n";
         // std::cerr << "  value FLAG = 5, 6, 7, or 8.\n";
-        exit ( 1 );
+        exit ( 3 );
         //flag_return = 2;
         //flag_return = 1;
         //flag_return = -2;
