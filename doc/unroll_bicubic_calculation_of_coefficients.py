@@ -181,6 +181,121 @@ def unroll_the_solution(A_inv):
 
     return out
 
+def obtain_expressions_for_function_values_and_derivatives():
+    """This function generates the expression for values of the function and
+    its derivatives. It goes up to second order.
+    """
+
+    # First the value
+    print("val = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i != 0:
+                chunk += " * " + " * ".join(["x" for i in range(i)])
+            if j != 0:
+                chunk += " * " + " * ".join(["y" for j in range(j)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
+    print()
+    print()
+    # Now the first derivative dx value
+    print("valdx = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i == 0:
+                continue
+            elif i == 1:
+                pass
+            else:
+                chunk += f" * {i} * " + " * ".join(["x" for _ in range(i-1)])
+            if j != 0:
+                chunk += " * " + " * ".join(["y" for _ in range(j)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
+    print()
+    print()
+    # Now the first derivative dx value
+    print("valdy = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i != 0:
+                chunk += " * " + " * ".join(["x" for _ in range(i)])
+
+            if j == 0:
+                continue
+            elif j == 1:
+                pass
+            else:
+                chunk += f" * {j} * " + " * ".join(["y" for _ in range(j-1)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
+    print()
+    print()
+    # Now the mixed derivative value
+    print("valdxdy = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i == 0:
+                continue
+            elif i == 1:
+                pass
+            else:
+                chunk += f" * {i} * " + " * ".join(["x" for _ in range(i-1)])
+
+            if j == 0:
+                continue
+            elif j == 1:
+                pass
+            else:
+                chunk += f" * {j} * " + " * ".join(["y" for _ in range(j-1)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
+    print()
+    print()
+    # Now the second derivative dx value
+    print("valdxdx = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i <= 1:
+                continue
+            elif i == 2:
+                chunk += f" * 2"
+            else:
+                chunk += f" * {i*(i-1)} * " + " * ".join(["x" for _ in range(i-2)])
+
+            if j != 0:
+                chunk += f" * " + " * ".join(["y" for _ in range(j)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
+    print()
+    print()
+    # Now the second derivative dy value
+    print("valdydy = ", end="")
+    for j in range(4):
+        for i in range(4):
+            chunk = ""
+            if i != 0:
+                chunk += " * " + " * ".join(["x" for _ in range(i)])
+
+            if j <= 1:
+                continue
+            elif j == 2:
+                chunk += f" * 2"
+            else:
+                chunk += f" * {j*(j-1)} * " + " * ".join(["y" for _ in range(j-2)])
+
+            print(f"a{i + 4*j}{chunk} + /*a[{i}, {j}]*/  \\")
+
 if __name__ == "__main__":
 
     # The matrix
@@ -194,3 +309,5 @@ if __name__ == "__main__":
 
     # Print the unrolled code.
     unroll_the_solution(A_inv)
+
+    obtain_expressions_for_function_values_and_derivatives()
