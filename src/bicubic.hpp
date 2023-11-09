@@ -81,5 +81,8 @@ public:
     void getAllValues(double x, double y, double &val, double &valdx,
                       double &valdy, double &valdxdy);
 
+    /// Get the second order derivatives.
+    void getSecondDerivatives(double x, double y, double &valdxdx, double &valdydy);
+
 };
 #endif /*BICUBIC_H*/

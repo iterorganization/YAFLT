@@ -460,26 +460,26 @@ void BICUBIC_INTERP::getAllValues(double x, double y, double &val,
             a5 * cell_y + /*a[1, 1]*/ \
             a6 * 2 * cell_x * cell_y + /*a[2, 1]*/ \
             a7 * 3 * cell_x2 * cell_y + /*a[3, 1]*/ \
-            a9 * cell_y * cell_y + /*a[1, 2]*/ \
-            a10 * 2 * cell_x * cell_y * cell_y + /*a[2, 2]*/ \
+            a9 * cell_y2 + /*a[1, 2]*/ \
+            a10 * 2 * cell_x * cell_y2 + /*a[2, 2]*/ \
             a11 * 3 * cell_x2 * cell_y2 + /*a[3, 2]*/ \
             a13 * cell_y2 * cell_y + /*a[1, 3]*/ \
             a14 * 2 * cell_x * cell_y2 * cell_y + /*a[2, 3]*/ \
             a15 * 3 * cell_x2 * cell_y2 * cell_y /*a[3, 3]*/;
 
     // Same here, it should be valdy, but it is valdx
-    valdy =a4  + /*a[0, 1]*/ \
-           a5 * cell_x  + /*a[1, 1]*/ \
-           a6 * cell_x2  + /*a[2, 1]*/ \
-           a7 * cell_x2 * cell_x  + /*a[3, 1]*/ \
-           a8 * 2 * cell_y + /*a[0, 2]*/ \
-           a9 * cell_x * 2 * cell_y + /*a[1, 2]*/ \
-           a10 * cell_x2 * 2 * cell_y + /*a[2, 2]*/ \
-           a11 * cell_x2 * cell_x * 2 * cell_y + /*a[3, 2]*/ \
-           a12 * 3 * cell_y * cell_y + /*a[0, 3]*/ \
-           a13 * cell_x * 3 * cell_y2 + /*a[1, 3]*/ \
-           a14 * cell_x2 * 3 * cell_y2 + /*a[2, 3]*/ \
-           a15 * cell_x2 * cell_x * 3 * cell_y2 /*a[3, 3]*/;
+    valdy = a4  + /*a[0, 1]*/ \
+            a5 * cell_x  + /*a[1, 1]*/ \
+            a6 * cell_x2  + /*a[2, 1]*/ \
+            a7 * cell_x2 * cell_x  + /*a[3, 1]*/ \
+            a8 * 2 * cell_y + /*a[0, 2]*/ \
+            a9 * cell_x * 2 * cell_y + /*a[1, 2]*/ \
+            a10 * cell_x2 * 2 * cell_y + /*a[2, 2]*/ \
+            a11 * cell_x2 * cell_x * 2 * cell_y + /*a[3, 2]*/ \
+            a12 * 3 * cell_y * cell_y + /*a[0, 3]*/ \
+            a13 * cell_x * 3 * cell_y2 + /*a[1, 3]*/ \
+            a14 * cell_x2 * 3 * cell_y2 + /*a[2, 3]*/ \
+            a15 * cell_x2 * cell_x * 3 * cell_y2 /*a[3, 3]*/;
 
     valdxdy = a5  + /*a[1, 1]*/ \
               a6 * 2 * cell_x  + /*a[2, 1]*/ \
@@ -494,4 +494,69 @@ void BICUBIC_INTERP::getAllValues(double x, double y, double &val,
     valdx = valdx / m_dx;
     valdy = valdy / m_dy;
     valdxdy = valdxdy / (m_dx * m_dy);
+};
+
+void BICUBIC_INTERP::getSecondDerivatives(double x, double y, double &valdxdx, double &valdydy){
+    // Function for obtaining values inside the X, Y domain.
+#ifndef NDEBUG
+    printf("GetValues %f %f\n", x, y);
+#endif
+    valdxdx = 0;
+    valdydy = 0;
+#ifndef NDEBUG
+    printf("Clipping\n");
+#endif
+    x = clip(x, m_minx, m_maxx);
+    y = clip(y, m_miny, m_maxy);
+#ifndef NDEBUG
+    printf("After clip: %f %f\n", x, y);
+#endif
+    double cell_x, cell_y;
+    rcin(x, y, cell_x, cell_y);
+#ifndef NDEBUG
+    printf("Rcin successfull\n");
+#endif
+    double cell_x2 = cell_x * cell_x;
+    double cell_y2 = cell_y * cell_y;
+
+    double a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
+
+    a0 = m_a[0];
+    a1 = m_a[1];
+    a2 = m_a[2];
+    a3 = m_a[3];
+    a4 = m_a[4];
+    a5 = m_a[5];
+    a6 = m_a[6];
+    a7 = m_a[7];
+    a8 = m_a[8];
+    a9 = m_a[9];
+    a10 = m_a[10];
+    a11 = m_a[11];
+    a12 = m_a[12];
+    a13 = m_a[13];
+    a14 = m_a[14];
+    a15 = m_a[15];
+
+    valdxdx = a2 * 2  + /*a[2, 0]*/ \
+              a3 * 6 * cell_x  + /*a[3, 0]*/ \
+              a6 * 2 * cell_y + /*a[2, 1]*/ \
+              a7 * 6 * cell_x * cell_y + /*a[3, 1]*/ \
+              a10 * 2 * cell_y * cell_y + /*a[2, 2]*/ \
+              a11 * 6 * cell_x * cell_y2 + /*a[3, 2]*/ \
+              a14 * 2 * cell_y2 * cell_y + /*a[2, 3]*/ \
+              a15 * 6 * cell_x * cell_y2 * cell_y /*a[3, 3]*/;
+
+    // Same here, it should be valdy, but it is valdx
+    valdydy = a8 * 2 + /*a[0, 2]*/ \
+              a9 * cell_x * 2 + /*a[1, 2]*/ \
+              a10 * cell_x2 * 2 + /*a[2, 2]*/ \
+              a11 * cell_x2 * cell_x * 2 + /*a[3, 2]*/ \
+              a12 * 6 * cell_y + /*a[0, 3]*/ \
+              a13 * cell_x * 6 * cell_y + /*a[1, 3]*/ \
+              a14 * cell_x2 * 6 * cell_y + /*a[2, 3]*/ \
+              a15 * cell_x2 * cell_x * 6 * cell_y /*a[3, 3]*/;
+
+    valdxdx = valdxdx / (m_dx*m_dx);
+    valdydy = valdydy / (m_dy*m_dy);
 };
