@@ -341,9 +341,6 @@ void FLT::getFL(std::vector<double>& storage, bool with_flt, int omp_thread){
         pre_t_step = std::asin(0.1 * m_self_intersection_avoidance_length / y[0]) * direction;
 
         while (state_data[BY_LENGTH] < m_self_intersection_avoidance_length){
-            ox = y[0] * cos(t_offset + t);
-            oy = y[0] * sin(t_offset + t);
-            oz = y[1];
             new_time = t + pre_t_step;
             while (0 < (new_time - t) * direction){
                 flag = m_rkf45_solvers[omp_thread]->r8_rkf45(y, yp, &t,
