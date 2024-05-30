@@ -1,17 +1,21 @@
 #ifndef FLT_H
 #define FLT_H
 
-// RKF45 solver method
-#include <rkf45.hpp>
+// Main FLT code here. Instead of writing what is here in short text, here are
+// the things the code does not do. It does not check and/or raises exceptions
+// if the input data does not match. It is out of scope of the code. The main
+// point of this code is that all the data is expected to be fully and
+// correctly provided. Failing to do so will result in UB or SF. The focus of
+// the code is to have as less code as possible in order to focus on precision
+// and performance of the code. That does not mean it has high(est) performance
+// possible, but just that it was developed at the time as best as it could be.
 
-// Bicubic interpolation method
+// Bi-cubic interpolation method
 #include <bicubic.hpp>
-
 
 #include <cmath>
 #include <accell_embree.hpp>
-
-class RKF45; // Forward declaration
+#include <vector>
 
 /// Class that solves the FL equation to obtain FL segments and checking if
 /// there is any intersection with the shadowing geometry.
@@ -19,21 +23,7 @@ class FLT
 {
 private:
 
-    /// Vector that holds the RKF45 solvers. Reason for that is that the solver
-    /// is not thread-safe, therefore for parallel reasons a vector is created
-    /// to hold the RKF45 solvers.
-    std::vector<RKF45*> m_rkf45_solvers;
     BICUBIC_INTERP *m_interp_psi;
-
-    /// Flags for stating if the interpolating objects are prepared
-    bool m_prepared=false;
-    bool m_interpolation_prepared=false;
-    bool m_containers_prepared=false;
-
-    /// This integer holds information for how many threads we prepared the
-    /// objects. If we call with the same number then nothing should happen, as
-    /// this "thread preparation" is only preparing worker objects.
-    int m_prepared_for_n_threads=-1;
 
     /// Dimensions of the R, Z space.
     size_t m_NDIMR=-1;
@@ -92,11 +82,8 @@ private:
     /// The poloidal current function F = B_t R in the vacuum.
     double m_vacuum_fpol;
 
-    /// FLT option index. Determines the termination condition when following
-    /// FLs. By default 0.\n
-    /// 0 - BY_TIME - terminate until a set time (toroidal angle)\n
-    /// 1 - BY_LENGTH - terminate until a set connection length.
-    int m_flt_option = BY_TIME;
+    /// Number of threads to use when running OpenMP
+    int m_number_of_threads=1;
 
     /// Initial values in (R, Z, Phi) in units (m, m, rad).\n
     /// A vector is used regardless of parallel or sequential.
@@ -112,17 +99,14 @@ private:
     /// Time resolution. This basically tells the solver, we want points at
     /// these steps. In radians.
     double m_t_step=1e-4;
-    /// End time in radians.
-    double m_t_end=0.0;
-
 
     /// Self intersection avoidance length. Length at which FLT does not check
     /// for intersections.
     double m_self_intersection_avoidance_length=5e-3;
-    /// m_max_conlen states the maximum length to follow a FL. In meters.
-    double m_max_conlen=1.0;
+    /// m_max_fieldline_length states the maximum length to follow a FL. In meters.
+    double m_max_fieldline_length=1.0;
 
-    /// Starting direction of a fieldline. By default to determine the
+    /// Starting toroidal direction of a fieldline. By default to determine the
     /// direction of a fieldline, we first take the sign of the FPol or the
     /// toroidal component of the magnetic field. Then, depending on the normal
     /// of our point, by checking the sign of the dot product between the
@@ -130,10 +114,8 @@ private:
     /// that we are following the FL on the right side of our element.
     std::vector<int> m_directions;
 
-    /// Output flag of the RKF45 solver. Currently if the data is good enough,
-    /// there is no need to process this value.
-    int m_flag;
-
+    /// As name implied, starting points of the field lines
+    std::vector<double> m_origin_points;
 
     /// The radial displacement moves in unit of meter. This shift corresponds
     /// to the shift of the plasma. Instead of applying this shift before
@@ -157,13 +139,23 @@ public:
     FLT();
     ~FLT(){};
 
-    /// FLT options enumerator. FL can be followed to a certain length or to a
-    /// certain toroidal angle
-    enum FLT_OPTION {BY_TIME, BY_LENGTH};
-
-    /// Sets the FLT option. If outside the range, default is BY_TIME
-    /// @param[in] option is whether 0, BY_TIME, or 1, BY_LENGTH.
-    void setFltOption(int option);
+    /// Output vector. Resized when the origin points are specified. This one
+    /// contains geometry IDs which are >= 0 of stored geometries in embree
+    /// object. -1 means that the particular fieldline reach its maximum
+    /// fieldline length. -2 means that the fieldline left the defined
+    /// computational area of the equilibrium grid (outside the min/max of [R,
+    /// Z])
+    std::vector<int> m_out_geom_hit_ids;
+    /// Output vector. Resized when the origin points are specified. This one
+    /// contains primite IDs which are >= 0 of triangles of a stored geometry
+    /// in the embree object. -1 means that the particular fieldline reach
+    /// its maximum fieldline length. -2 means that the fieldline left the
+    /// defined computational area of the equilibrium grid (outside the
+    /// min/max of [R, Z])
+    std::vector<int> m_out_prim_hit_ids;
+    /// Output vector. Resized when the origin points are specified. This one
+    /// stores the lengths of the fieldlines.
+    std::vector<double> m_out_fieldline_lengths;
 
     /// Sets dimension of the (R,Z) grid. This has to be set before adding any
     /// radial or vertical points, psi values or flux points and fpol values as
@@ -208,42 +200,24 @@ public:
     /// Sets the desired relative error for the RKF45 solver
     /// @param[in] relerr is the RKF45 parameter for relative accuracy.
     void setRelError(double relerr){m_relerr = relerr;};
-    /// Sets the initial value for running in single thread. When running in
-    /// serial only for one thread the containers are prepared and the user does
-    /// not need to give the thread id.
-    /// The initial value is defined in the Cylindrical coordinate system.
-    /// @param[in] r is the radial value of the starting point
-    /// @param[in] z is the vertical value of the starting point
-    /// @param[in] phi is the toroidal (cylindrical) angle of the starting
-    ///                point.
-    /// @param[in] omp_thread is the index of the OpenMP, if activated, thread.
-    ///                       Defaults to 0 as "serial" execution.
-    void setIV(double r, double z, double phi, int omp_thread=0);
-    /// Sets the time span where t_end denotes the end for the toroidal angle and
-    /// t_step denotes the resolution at which we wish to gather FL points.
-    /// @param[in] t_end is the end toroidal angle or the end "time", to which
-    ///                  a FL is followed if option=BY_TIME. For each starting
-    ///                  point the "time" or angle starts at 0, which means if
-    ///                  the t_end is set to 10 degrees then FLs are followed
-    ///                  from their starting points for 10 degrees toroidially.
+    /// Sets the desired toroidal angle step (the parametric time of the
+    /// partial differential equations). Since the solver is an adaptive rkf45
+    /// desired mean that at each time the solver tries to find the next
+    /// solution it will use this step as it's starting move.
     /// @param[in] t_step is the toroidal angle step at which we wish to gather
     ///                   FLT points, used for FLT or basically tracking.
-    void setTimeSpan(double t_end, double t_step);
-    /// Sets the maximum connection length in meters to follow a FL.
+    void setDesiredStep(double t_step){
+        m_t_step = t_step;
+    }
+
+    /// Sets the maximum fieldline length in meters to follow a FL.
     /// @param[in] max_conlen is the maximum connection length to which we
     ///                       follow a FL, if the termination is determined by
     ///                       its length. Otherwise ignored if following till a
     ///                       specified toroidal angle.
-    void setMaximumConnectionLength(double max_conlen){m_max_conlen = max_conlen;};
-    /// Sets the direction of a FL (1 or -1) for running in single thread. When
-    /// running in serial only for one thread the containers are prepared and the
-    /// user does not need to give the thread id.
-    /// @param[in] direction specifies the direction we traverse the FL. Mainly
-    ///                      this is used to correctly travel away from the
-    ///                      geometry we are tracing.
-    /// @param[in] omp_thread is the index of the OpenMP, if activated, thread.
-    ///                       Defaults to 0 as "serial" execution.
-    void setDirection(int direction, int omp_thread=0);
+    void setMaximumFieldlineLength(double max_fieldline_length){
+        m_max_fieldline_length = max_fieldline_length;
+    };
     /// Calculates the barycenter of a set of triangle points. Orientation is
     /// determined from the order of the ID list of a triangle. :
     ///                      p3 - - p2
@@ -265,53 +239,61 @@ public:
     ///                  intersection test when following a FL. This value
     ///                  should be small, in the range of millimeters.
     void setSelfIntersectionAvoidanceLength(double value) {m_self_intersection_avoidance_length = value;};
-    ///Prepares the interpolation objects.
+
+    /// Prepares the interpolation objects.
     bool prepareInterpolation();
 
-    /// Returns a 1D array of points for a fieldline that is tracked until end
-    /// of time (toroidal angle) or the maximum connection length from the
-    /// initial starting point set by setIV. The points saved in the vector are
-    /// in cylindrical coordinates (R, Z, phi) with units (m, m, rad).
-    ///
-    /// FLT can be activated with the argument with_flt.
-    /// @param[in, out] storage is a 1D array containing points of the FL.
-    /// @param[in] with_flt activates or deactivates intersection tests when
-    ///                     following FL.
-    /// @param[in] omp_thread is the index of the OpenMP, if activated, thread.
-    ///                       Defaults to 0 as "serial" execution.
-    void getFL(std::vector<double>& storage, bool with_flt=false, int omp_thread=0);
+    /// Sets the number of threads to use when running in parallel with OpenMP.
+    /// The functions doesn't check the maximum value but insures the value
+    /// is not below or equal 0.
+    void setNumberOfThreads(int n){
+        if (n <= 0){
+            n = 1;
+        }
+        m_number_of_threads=n;
+    }
 
-    /// Runs a FLT from a starting initial value set by setIV until the end
-    /// of time (toroidal angle) or the maximum connection length. The final
-    /// result is a value stored and m_conlens and m_geom_hit_ids.
-    /// By default if only one thread is run, the default thread ID is 0. If
-    /// openMP is activated, then the used must provide thread ID as argument,
-    /// otherwise
-    /// @param[in] omp_thread is the index of the OpenMP, if activated, thread.
-    ///                       Defaults to 0 as "serial" execution.
-    void runFLT(int omp_thread=0);
+    // USER BEWARE
+    //     WHEN SETTING THE INPUT ARRAYS, IT'S ON YOU TO MAKE SURE THAT THE
+    //     INPUT ARRAYS SIZE MATCH IN THE CONTEXT OF HOW MANY POINTS ARE.
+    // USER BEWARE
 
-    /// m_conlens tells us the length of the FL, evaluated in FLT functions.
-    /// By default if only one thread is run, aka sequential, this is a vector
-    /// of size 1.
-    std::vector<double> m_conlens;
+    /// Set the origin points or starting points to run FLT form
+    /// @param[in] origin_points is a vector of (3xN) size containing origin points.
+    void setPoints(std::vector<double> origin_points);
 
-    /// m_geom_hit_ids tells us which geometry, an integer registered by embree
-    /// when commiting a geometry to it's shadowing structure. Since the
-    /// geometry ID's in Embree are non-negative, the negative values tells us
-    /// the following:
-    /// -1 : Connection length has reached it's end toroidal time or the
-    ///      maximum connection length
-    /// -2 : The FL has left the computational RZ domain, defined in the
-    ///      equilibrium. Since interpolation is used, there is no use to
-    ///      follow FLs outside the interpolation area, as extrapolation would
-    ///      be required
-    /// -3 : The FL wasn't followed at all, i.e., the initialized value
-    std::vector<int> m_geom_hit_ids;
+    /// Set the toroidal direction (positive (-1) or negative (1) orientation)
+    /// for the input data.
+    /// @param[in] direction is a vector of size N containing the direction
+    void setStartingFLDirection(std::vector<int> directions){m_directions=directions;};
 
-    /// m_prim_hit_ids tells us, in case of intersection what is the ID of the
-    /// intersected triangle.
-    std::vector<int> m_prim_hit_ids;
+
+    // ONLY WHEN THE FUNCTION SETPOINTS AND SETSTARTINGFLDIRECTION WHERE CALLED
+    // MAY YOU CALL RUNFLT
+
+    /// The main function that performs the FLT on the input data set via
+    /// functions setPoints and setStartingFLDirection
+    void runFLT();
+
+    void getFL(const double r, const double z, const double phi,
+                const int direction, std::vector<double>& storage,
+                const bool with_flt);
+
+    /// This is the RKF4(5) method for getting the next approximate solution to
+    /// a 2D system of PDEs (non-time-dependent).
+    void fehl_step(double y[2], double t, double h, double yp[2], double k2[2],
+                   double k3[2], double k4[2], double k5[2], double k6[2],
+                   double s[2], BI_DATA *context);
+
+    /// Function that calculates the partial derivatives of the axis-symmetric
+    /// non-time dependent PDE's for fieldlines in a Cylindrical coordinate
+    /// system.
+    /// @param[in] y[2] is the (R, Z) position where we want to calculate the
+    ///            partial derivative values.
+    /// @param[in, out] yp[2] holds the values of the partial derivatives at
+    ///                 points (R, Z)
+    /// @param[in, out] context holds the interpolation information.
+    void flt_pde(double y[2], double yp[2], BI_DATA *context);
 
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad)
     /// return the poloidal and toroidal component of the magnetic field.
@@ -355,17 +337,6 @@ public:
     /// @param[in] accellObj is the Embree accelerated structure used for
     ///                      performing the intersection tests.
     void setEmbreeObj(EmbreeAccell* accellObj);
-    /// The following function allocates n of each local thread
-    /// values. To be called before running the OpenMP functions in parallel
-    /// OpenMP block. When running sequentially user must just call this
-    /// function so that the containers are prepared.
-    /// @param[in] n tells us how many threads we have. By default, when no
-    ///              OpenMP blocks are used this value should be 1. Otherwise
-    ///              this value should equal to the number of threads we spawn
-    ///              when using OpenMP
-    void prepareThreadContainers(int n=1);
-
-    void getPFValues(double r, double z, double &val, double &valdx, double &valdy, double &valdxdy, int omp_index=0);
 };
 
 #endif //FLT_H
