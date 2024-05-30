@@ -75,8 +75,6 @@ int main(){
 
     // Init and run
     obj->prepareInterpolation();
-    /*Even if running sequentially the following function must be called.*/
-    obj->prepareThreadContainers();
 
     // Set ODE parameters
     obj->setAbsError(1e-4);
@@ -119,8 +117,6 @@ int main(){
         bz = 0.001 * barycenter[2];
         bphi = atan2(barycenter[1], barycenter[0]);
 
-        obj->setIV(br, bz, bphi);
-
         /*Figure out direction*/
 
         /*Get triangle normal*/
@@ -152,21 +148,20 @@ int main(){
 
         /*Apply direction */
 
-        obj->setDirection(direction);
-        obj->setTimeSpan(1.0, 1e-2);
+        obj->setDesiredStep(1e-2);
         result.clear();
         result.push_back(br);
         result.push_back(bz);
         result.push_back(bphi);
-        obj->getFL(result);
+        obj->getFL(br, bz, bphi, direction, result, false);
         if (result.size() == 3){
             std::cout << "No results stored. Stopping" << std::endl;
         }
         else {
-            if (i == 1683){
+            if (i == 649){
                 // Triangle max Q for inres
-                write2VTK(result, "fl_cpp2_" + std::to_string(i) + ".vtk");
-                writeTri2VTK(p1, p2, p3, "target_tri_" + std::to_string(i) + ".vtk");
+                write2VTK(result, "fl_cpp2_3_" + std::to_string(i) + ".vtk");
+                writeTri2VTK(p1, p2, p3, "target_tri2_3_" + std::to_string(i) + ".vtk");
             }
         }
 

@@ -25,22 +25,23 @@ int main(){
 
     // Init and run
     obj->prepareInterpolation();
-    /*Even if running sequentially the following function must be called.*/
-    obj->prepareThreadContainers();
 
     // Set ODE parameters
     obj->setAbsError(1e-4);
     obj->setRelError(1e-4);
-    obj->setIV(4.043846846215178, 0.284476, 0.09093153458023334);
-    obj->setTimeSpan(471.23, 1e-2);
+
+    obj->setDesiredStep(0.01);
 
     std::vector<double> result;
-    obj->getFL(result);
+    int direction=1;
+    bool with_flt=false; // No shadow geometry used anyway;
+    obj->setMaximumFieldlineLength(2565.4);
+    obj->getFL(4.043846846215178, 0.284476, 0.09093153458023334, direction, result, with_flt);
     if (result.size() == 0){
         std::cout << "No results stored. Stopping" << std::endl;
     }
 
-    write2VTK(result, "fl_cpp1.vtk");
+    write2VTK(result, "fl_cpp2_1.vtk");
 
     return 0;
 }

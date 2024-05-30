@@ -28,22 +28,49 @@ int main(){
     bool intersect;
 
     obj2->commitMesh(vertices, vertices_size, indices, triangles_size);
-    /*Even if running sequentially the following function must be called.*/
-    obj2->prepareThreadContainers();
-    obj2->castRay(0, 0, -1, 0, 0, 1, tnear, tfar);
 
-    intersect = obj2->checkIfHit();
-      if (intersect == true)
-         std::cout << "intersect: " << intersect << std::endl;
-      else
+
+    RTCRayHit rayHit = RTCRayHit();
+    RTCIntersectContext rayContext = RTCIntersectContext();
+    rtcInitIntersectContext(&rayContext);
+
+    rayHit.ray.org_x = 0;
+    rayHit.ray.org_y = 0;
+    rayHit.ray.org_z = -1;
+    rayHit.ray.dir_x = 0;
+    rayHit.ray.dir_y = 0;
+    rayHit.ray.dir_z = 1;
+    rayHit.ray.tnear = tnear;
+    rayHit.ray.tfar = tfar;
+    rayHit.ray.mask = 0;
+    rayHit.ray.flags = 0;
+    rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+    rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+    obj2->castRay(&rayHit, &rayContext);
+
+    intersect = rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
+    if (intersect == true)
+        std::cout << "intersect: " << intersect << std::endl;
+    else
         std::cout << "intersect: 0" << std::endl;
 
-    obj2->castRay( 1, 1, -1, 0, 0, 1, tnear, tfar);
+    rayHit.ray.org_x = 1;
+    rayHit.ray.org_y = 1;
+    rayHit.ray.org_z = -1;
+    rayHit.ray.dir_x = 0;
+    rayHit.ray.dir_y = 0;
+    rayHit.ray.dir_z = 1;
+    rayHit.ray.tnear = tnear;
+    rayHit.ray.tfar = tfar;
+    rayHit.ray.mask = 0;
+    rayHit.ray.flags = 0;
+    rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+    rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
-    intersect = obj2->checkIfHit();
-      if (intersect == true)
-         std::cout << "intersect: " << intersect << std::endl;
-      else
+    intersect = rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
+    if (intersect == true)
+        std::cout << "intersect: " << intersect << std::endl;
+    else
         std::cout << "intersect: 0" << std::endl;
 
     return 0;

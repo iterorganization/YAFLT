@@ -34,19 +34,21 @@ int main(){
 
     // Init and run
     obj->prepareInterpolation();
-    /*Even if running sequentially the following function must be called.*/
-    obj->prepareThreadContainers();
 
     // Set ODE parameters
     obj->setAbsError(1e-4);
     obj->setRelError(1e-4);
-    obj->setTimeSpan(1.0, 1e-1);
+    obj->setDesiredStep(1e-1);
 
     double p1[3], p2[3], p3[3];
     std::vector<double> barycenter;
     double br, bz, bphi;
     //std::vector<double> p1, p2, p3;
     int nTriangle = triv0.size();
+
+    std::vector<double> point;
+    point.resize(3);
+
     for(int i = 1; i < nTriangle + 1; i++){
         /*Run only for 10% of triangles*/
         if(i % (triv0.size() / 10) == 0){
@@ -63,10 +65,8 @@ int main(){
             bz = 0.001 * barycenter[2];
             bphi = atan2(barycenter[1], barycenter[0]);
 
-            obj->setIV(br, bz, bphi);
-
             std::vector<double> result;
-            obj->getFL(result);
+            obj->getFL(br, bz, bphi, 1, result, false);
             if (result.size() == 0){
                 std::cout << "No results stored. Stopping" << std::endl;
             }

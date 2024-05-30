@@ -97,8 +97,6 @@ int main(){
 
     // Prepare interpolation objects
     obj->prepareInterpolation();
-    /*Even if running sequentially the following function must be called.*/
-    obj->prepareThreadContainers();
 
 
     // Set ODE parameters
@@ -108,14 +106,9 @@ int main(){
     // Inres -6 mm radial shift and 0 vertical shift
     obj->setShift(-0.006, 0.0);
 
-    // Set to follow FL to end length
-    obj->setFltOption(obj->BY_LENGTH);
-
     // Set the integration toroidal angle step
-    obj->setTimeSpan(3.14, 0.01); // We have to specify two values,
-                                  // First is the angle end, the second is
-                                  // angular step
-    obj->setMaximumConnectionLength(4.3); // meters
+    obj->setDesiredStep(0.01);
+    obj->setMaximumFieldlineLength(4.3); // meters
     obj->setSelfIntersectionAvoidanceLength(0.001);
 
 
@@ -127,14 +120,11 @@ int main(){
     magneticVector.resize(3);
     double br, bz, bphi;
     double dot_product;
-    double angle_rad, angle_deg, angle_inc_deg;
     bool is_hit;
     int direction;
 
     double FPol_vaccuum = FPOLs[FPOLs.size() - 1];
-    int default_direction = (FPol_vaccuum < 0.0) ? -1 : 1;;
-
-
+    int default_direction = (FPol_vaccuum < 0.0) ? -1 : 1;
 
     int nTriangle = triv0.size();
 
@@ -145,6 +135,9 @@ int main(){
     mask.resize(nTriangle);
 
     int nShadowed = 0;
+
+    std::vector<double> points;
+    std::vector<int> directions;
     for(int i = 0; i < nTriangle; i++){
         std::cout << std::endl;
         std::cout << "Triangle No. " << i << " has vertices:" << std::endl;
@@ -156,12 +149,15 @@ int main(){
         p2[0] = vx[triv1[i]-1]; p2[1] = vy[triv1[i]-1]; p2[2] = vz[triv1[i]-1];
         p3[0] = vx[triv2[i]-1]; p3[1] = vy[triv2[i]-1]; p3[2] = vz[triv2[i]-1];
         barycenter = getBaryCenter(p1, p2, p3);
+
+        // Get the barycenter of the triangles and convert from mm to m.
         br = 0.001 * sqrt(pow(barycenter[0], 2.0) +  pow(barycenter[1], 2.0));
         bz = 0.001 * barycenter[2];
         bphi = atan2(barycenter[1], barycenter[0]);
-
-        // Set initial starting point of the FL. In (R, Z, Phi) in (m, m, rad).
-        obj->setIV(br, bz, bphi);
+        // Store the points
+        points.push_back(br);
+        points.push_back(bz);
+        points.push_back(bphi);
 
         /*Figure out direction*/
 
@@ -170,53 +166,41 @@ int main(){
         /*Get direction and angle from the magnetic */
         obj->getBCart(br, bz, bphi, magneticVector);
 
-        std::cout << "Normal vector: " << normal[0] << " " << normal[1] << " " << normal[2] << std::endl;
-        std::cout << "Magnetic vector: " << magneticVector[0] << " " << magneticVector[1] << " " << magneticVector[2] << std::endl;
-
         dot_product = std::inner_product(normal.begin(), normal.end(), magneticVector.begin(), 0.0);
-        std::cout << "Dot product: " << dot_product << std::endl;
 
         // Sign of FPol tell us the initial starting direction.
         direction = default_direction;
         // But what if the normal of the triangle is facing the other direction?
         direction = (dot_product < 0.0) ? -direction : direction;
-
-        std::cout << "Starting direction - CW: 1, CCW: 0 -> " << direction << std::endl;
-
-        /*Get incident angle*/
-        angle_rad = angleBetweenVectors(normal, magneticVector, direction);
-        angle_deg = angle_rad * 180.0 / M_PI;
-
-        angle_inc_deg = (angle_deg > 90.0) ? angle_deg - 90.0 : 90.0 - angle_deg;
-
-        std::cout << "Angle in radians: " << angle_rad << std::endl;
-        std::cout << "Angle in degrees: " << angle_deg << std::endl;
-        std::cout << "Angle in degrees (incident): " << angle_inc_deg << std::endl;
+        directions.push_back(direction);
+        printf("i=%d br=%f bz=%f bphi=%f direction=%d\n", i, br, bz, bphi, direction);
+    }
 
 
-        /*Apply direction */
+    obj->setStartingFLDirection(directions);
+    obj->setPoints(points);
 
-        obj->setDirection(direction);
-        obj->runFLT();
-        std::cout << "Triangle Id: " << i << std::endl;
+    // Set number of threads
+    obj->setNumberOfThreads(16);
 
-        // See if connection length is longer than 4.3meters.
-        if (obj->m_conlens[0] > 4.3e3){
+    // Run the FLT
+    obj->runFLT();
+
+    double fieldline_length=0.0;
+    for(int i = 0; i < obj->m_out_fieldline_lengths.size(); i++){
+        fieldline_length = obj->m_out_fieldline_lengths[i];
+        printf("%d length=%f geom=%d prim=%d\n", i, fieldline_length, obj->m_out_geom_hit_ids[i], obj->m_out_prim_hit_ids[i]);
+        conlen[i] = fieldline_length;
+
+        is_hit=false;
+        if (fieldline_length < 4.3){
             is_hit = true;
+            nShadowed += is_hit;
         }
-        else {
-            is_hit = false;
-        }
-
-        std::cout << "\tIs FL shadowed?: " << is_hit << std::endl;
-        nShadowed += is_hit;
-
-        conlen[i] = obj->m_conlens[0];
         mask[i] = is_hit;
 
-        std::cout << "\tConnection length: " << obj->m_conlens[0] << std::endl;
-        std::cout << std::endl;
     }
+
 
     std::cout << "Number of shadowed triangles: " << nShadowed << std::endl;
     float percentage = 100.0 * nShadowed / nTriangle;
