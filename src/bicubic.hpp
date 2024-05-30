@@ -26,13 +26,6 @@ class BICUBIC_INTERP
 {
 
 public:
-    /// The Recompute Coefficients If Needed function. When calling the
-    /// getValues or getAllValues function, the index of the cell where the
-    /// queried point lies has to be computed. Then this function checks if for
-    /// that cell we already have the interpolation coefficients. If not then
-    /// the interpolate function is called.
-    void rcin(double x, double y, double &out_cell_x, double &out_cell_y, BI_DATA *context);
-
     /// Rectilinear weights. Obtained from the input X- and Y-axis arrays and
     /// are needed when obtaining the partial derivatives.
     double m_dx=1.0, m_dy=1.0;
