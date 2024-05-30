@@ -1,10 +1,8 @@
 #ifndef RKF45_H
 #define RKF45_H
 
-#include <flt.hpp>
 #include <bicubic.hpp>
 
-class FLT; /*Forward declaration*/
 class RKF45
 {
 private:

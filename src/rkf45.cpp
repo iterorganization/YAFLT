@@ -1,4 +1,6 @@
-#include<flt.hpp>
+#include "bicubic.hpp"
+#include <cmath>
+#include <cstdlib>
 #include<rkf45.hpp>
 
 RKF45::RKF45(){
@@ -200,14 +202,17 @@ void RKF45::r8_flt(double t, double y[2], double yp[2]){
     // Derivative function for the RKF45. It evaluates the ratio between the
     // (R, Z) magnetic components and the toroidal magnetic component in the
     // cylindrical coordinate system.
-    double derivFluxdX, derivFluxdY, factor;
+    double factor;
 
-    m_interp_psi->getValues(y[0] - m_r_move, y[1] - m_z_move, factor,
-                            derivFluxdX, derivFluxdY);
+    BI_DATA *context = new BI_DATA;
+    m_interp_psi->populateContext(context);
+    context->r = y[0] - m_r_move;
+    context->z = y[1] - m_z_move;
+    m_interp_psi->getValues(context);
 
     factor = y[0] / m_vacuum_fpol;
-    yp[0] = - derivFluxdY * factor;
-    yp[1] =   derivFluxdX * factor;
+    yp[0] = - context->valdy * factor;
+    yp[1] =   context->valdx * factor;
 }
 
 void RKF45::r8_fehl(double y[2], double t, double h, double yp[2],
@@ -779,9 +784,9 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
       {
         toln = tol;
         ypk = r8_abs ( yp[k] );
-        if ( tol < ypk * pow ( m_h, 5 ) )
+        if ( tol < ypk * std::pow ( m_h, 5 ) )
         {
-          m_h = pow ( ( tol / ypk ), 0.2 );
+          m_h = std::pow ( ( tol / ypk ), 0.2 );
         }
       }
     }
@@ -993,7 +998,7 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
 
       if ( esttol < 59049.0 )
       {
-        s = 0.9 / pow ( esttol, 0.2 );
+        s = 0.9 / std::pow ( esttol, 0.2 );
       }
       else
       {
@@ -1032,7 +1037,7 @@ int RKF45::r8_rkf45(double y[2], double yp[2], double *t,
 //
     if ( 0.0001889568 < esttol )
     {
-      s = 0.9 / pow ( esttol, 0.2 );
+      s = 0.9 / std::pow ( esttol, 0.2 );
     }
     else
     {
