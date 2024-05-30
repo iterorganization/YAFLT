@@ -113,23 +113,6 @@ void EmbreeAccell::deleteScene(){
     m_scene_created = false;
 }
 
-
-void EmbreeAccell::prepareThreadContainers(int num_threads){
-    // Prepares all relevant thread variables, if the code is called inside a
-    // parallel block. While this is not the best threaded solution, it is the
-    // easiest, as you only need to create write or read/write mode variables.
-    // Without this you get UB when trying to run in a parallel block.
-    m_listRayHit.clear();
-    m_listContext.clear();
-
-    // Padding to avoid false sharing, especially when writing to listRayHit
-    for (int i=0; i<OMP_INT_PADDING*num_threads;i++){
-        m_listRayHit.push_back(RTCRayHit());
-        m_listContext.push_back(RTCIntersectContext());
-        rtcInitIntersectContext(&m_listContext[i]);
-    }
-}
-
 unsigned int EmbreeAccell::commitMesh(float* vertices, long int n_vertices,
                               unsigned* triangles, long int n_triangles){
 
@@ -215,52 +198,7 @@ bool EmbreeAccell::deleteMesh(unsigned int geom_id){
     return true;
 }
 
-void EmbreeAccell::castRay(float ox, float oy, float oz,
-                           float dx, float dy, float dz,
-                           double tnear, double tfar, int omp_thread){
-
-    // The ray hit structure holds both the ray and the hit.
-    // The user must initialize it properly -- see API documentation
-    // for rtcIntersect1() for details.
-    int thread_index = omp_thread * OMP_INT_PADDING;
-
-    m_listRayHit[thread_index].ray.org_x = ox;
-    m_listRayHit[thread_index].ray.org_y = oy;
-    m_listRayHit[thread_index].ray.org_z = oz;
-    m_listRayHit[thread_index].ray.dir_x = dx;
-    m_listRayHit[thread_index].ray.dir_y = dy;
-    m_listRayHit[thread_index].ray.dir_z = dz;
-    m_listRayHit[thread_index].ray.tnear = tnear;
-    m_listRayHit[thread_index].ray.tfar = tfar;
-    m_listRayHit[thread_index].ray.mask = 0;
-    m_listRayHit[thread_index].ray.flags = 0;
-    m_listRayHit[thread_index].hit.geomID = RTC_INVALID_GEOMETRY_ID;
-    m_listRayHit[thread_index].hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
-
-    // There are multiple variants of rtcIntersect. This one
-    // intersects a single ray with the scene.
-    rtcIntersect1(m_scene, &m_listContext[thread_index], &m_listRayHit[thread_index]);
+void EmbreeAccell::castRay(RTCRayHit *ray, RTCIntersectContext *context){
+    rtcIntersect1(m_scene, context, ray);
 }
 
-bool EmbreeAccell::checkIfHit(int omp_thread){
-    int thread_index = omp_thread * OMP_INT_PADDING; // 5 is the padding
-    if (m_listRayHit[thread_index].hit.geomID != RTC_INVALID_GEOMETRY_ID){
-// #ifndef NDEBUG
-//         std::cout << "Found intersection on geometry " << m_listRayHit[omp_thread].hit.geomID;
-//         std::cout << ", primitive " << m_listRayHit[omp_thread].hit.primID;
-//         std::cout << " at tfar=" << m_listRayHit[omp_thread].ray.tfar << std::endl;
-// #endif
-        return true;
-    }
-    return false;
-}
-
-int EmbreeAccell::returnGeomId(int omp_thread){
-    return (int) m_listRayHit[omp_thread*OMP_INT_PADDING].hit.geomID;
-}
-
-int EmbreeAccell::returnPrimId(int omp_thread){
-    /// It makes no sense why the geomID in Embree documentation is called the
-    /// primitive ID and the primID is called the geometry ID... Maybe typo.
-    return (int) m_listRayHit[omp_thread*OMP_INT_PADDING].hit.primID;
-}
