@@ -21,6 +21,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 # 3rd party dependencies
 find_package(embree 3.3.0 REQUIRED)
 find_package(Doxygen)
+find_package(OpenMP)
 
 # Options
 option(FLT_BUILD_EXAMPLES "Build examples" ON)
