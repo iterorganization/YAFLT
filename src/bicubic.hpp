@@ -3,21 +3,27 @@
 
 #include <vector>
 
-void process_input_arrays(std::vector<double> x, std::vector<double> y,
-                          std::vector<std::vector<double>> f, double *out_x,
-                          double *out_y, double *out_f, double *out_fdx,
-                          double *out_fdy, double *out_fdxdy);
+// BI_DATA struct is used for providing context when obtaining interpolation
+// values. Also more OpenMP friendly than plain shared class attributes.
+struct alignas(64) BI_DATA
+{
+    double r=0;
+    double z=0;
+    double val=0;
+    double valdx=0;
+    double valdy=0;
+    double dx=0.0;
+    double dy=0.0;
+    double minx=0.0;
+    double miny=0.0;
+    double maxx=0.0;
+    double maxy=0.0;
+    int nx=0;
+    int ny=0;
+};
+
 class BICUBIC_INTERP
 {
-private:
-    /// Container for the coefficients. These coefficients are calculated for
-    /// each cell.
-    std::vector<double> m_a;
-
-    /// To avoid recalculating the m_a coefficients, we remember the last cell
-    /// we were in case the new query point lies inside the same cell.
-    int m_cell_row, m_cell_col;
-
 
 public:
     /// The Recompute Coefficients If Needed function. When calling the
@@ -25,12 +31,8 @@ public:
     /// queried point lies has to be computed. Then this function checks if for
     /// that cell we already have the interpolation coefficients. If not then
     /// the interpolate function is called.
-    void rcin(double x, double y, double &out_cell_x, double &out_cell_y);
+    void rcin(double x, double y, double &out_cell_x, double &out_cell_y, BI_DATA *context);
 
-    /// Actually interpolates the function by generating the interpolant
-    /// coefficients stored in m_a. These coefficients are then used when
-    /// calling getValues function.
-    void interpolate(int r, int c);
     /// Rectilinear weights. Obtained from the input X- and Y-axis arrays and
     /// are needed when obtaining the partial derivatives.
     double m_dx=1.0, m_dy=1.0;
@@ -52,13 +54,11 @@ public:
     std::vector<std::vector<double>> m_fdx;
     std::vector<std::vector<double>> m_fdy;
     std::vector<std::vector<double>> m_fdxdy;
+    /// 1D vector that holds the constants. The Size is (Nx*Ny*16);
+    std::vector<double> m_a;
 
     BICUBIC_INTERP(){};
     ~BICUBIC_INTERP(){};
-
-    /// Resizes the vectors so that OpenMP threads will access their respective
-    /// thread related storages.
-    void prepareContainers(int number_of_omp_threads=1);
 
     /// Function that takes the X-axis and Y-axis 1D arrays and the 2D array
     /// which we wish to interpolate. For the bicubic interpolation the first
@@ -69,20 +69,22 @@ public:
     void setArrays(std::vector<double> x, std::vector<double> y,
                    std::vector<std::vector<double>> f);
 
+    void populateContext(BI_DATA *context){
+        context->dx = m_dx;
+        context->dy = m_dy;
+        context->minx = m_minx;
+        context->miny = m_miny;
+        context->nx = m_nx;
+        context->ny = m_ny;
+        context->maxx = m_maxx;
+        context->maxy = m_maxy;
+    }
+
     /// Obtain the function value and its first partial derivatives at point
     /// (x, y). **DOES NOT EXPTRAPOLATE**. If the Query point points outside
     /// the numerical domain defined by the function domain, it is
     /// automatically clipped o the border.
-    void getValues(double x, double y, double &val, double &valdx,
-                   double &valdy);
-
-    /// Same as getValues, except it also provides the second mixed partial
-    /// derivative.
-    void getAllValues(double x, double y, double &val, double &valdx,
-                      double &valdy, double &valdxdy);
-
-    /// Get the second order derivatives.
-    void getSecondDerivatives(double x, double y, double &valdxdx, double &valdydy);
+    void getValues(BI_DATA *context);
 
 };
 #endif /*BICUBIC_H*/
