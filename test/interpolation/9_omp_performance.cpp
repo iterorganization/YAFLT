@@ -4,9 +4,6 @@
 // Naive bicubic interpolation method
 #include <bicubic.hpp>
 
-// Testing std::vector with openmp threads.
-#include <bicubic_vector.hpp>
-
 #include <vector>
 #include <stdio.h>
 #include <stdlib.h> /*srand, rand*/
@@ -24,7 +21,6 @@ int main(){
     omp_set_num_threads(THREAD_NUM);
     srand(time(NULL));
     // Prepare the naive interpolation.
-    BICUBIC_INTERP *naive_interp = new BICUBIC_INTERP();
     int n_cols = eq3_Rs.size();
     int n_rows = eq3_Zs.size();
 
@@ -38,22 +34,6 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers(THREAD_NUM);
-    naive_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
-
-    // Now prepare THREAD_NUM interpolators, to see if having multiple
-    // instances is faster...
-    std::vector<BICUBIC_INTERP *> naive_interpolators;
-    naive_interpolators.resize(THREAD_NUM);
-    for (int i=0; i<THREAD_NUM; i++){
-        BICUBIC_INTERP *interp = new BICUBIC_INTERP();
-        naive_interpolators[i] = interp;
-
-        // Populate with data
-        naive_interpolators[i]->prepareContainers(1); // Only one!
-        naive_interpolators[i]->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
-    }
-
 
     // For Random prepare lower and upper boundaries
     double rmin, rmax, rdiff, zmin, zmax, zdiff;
@@ -64,21 +44,12 @@ int main(){
     zmax = eq3_Zs[eq3_Zs.size() - 2];
     zdiff = zmax - zmin;
 
-    // Output variables
-    double fval, fvaldx, fvaldy, fvaldxdy;
-
     // for (int i=0; i<10;i++){
     //     random_number(rmin, rmax, buff_x);
     //     random_number(zmin, zmax, buff_y);
     //     printf("%f %f\n", buff_x, buff_y);
     // }
-    int N = 100*1000*1000;
-    int chunk_N = N / THREAD_NUM;
-    // OMP related variables
-    int tid;
-    int offset;
-    int index;
-
+    int N = 1000*1000*1000;
 
     std::vector<double> buff_r;
     std::vector<double> buff_z;
@@ -86,77 +57,66 @@ int main(){
     buff_r.resize(N);
     buff_z.resize(N);
 
+    // Interpolation object
+
+    BICUBIC_INTERP *bicubic_interp = new BICUBIC_INTERP();
+    bicubic_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
+    BI_DATA *context= new BI_DATA();
+    bicubic_interp->populateContext(context);
 
     // Let's just make a large array and put the values there...
     printf("Creating %d random points.\n", N);
-    auto begin = std::chrono::high_resolution_clock::now();
+
+    double begin, end, elapsed;
+
+    begin = omp_get_wtime();
     for (int i=0; i<N; i++){
         buff_r[i] = rmin + rdiff * rand() / RAND_MAX;
         buff_z[i] = zmin + zdiff * rand() / RAND_MAX;
     }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Completed in: %f seconds\n", elapsed.count() * 1e-9);
+    end = omp_get_wtime();
+    elapsed = end-begin;
+    printf("Completed in: %f seconds\n", elapsed);
 
     // SERIAL
-    begin = std::chrono::high_resolution_clock::now();
-    tid = 0;
+    // begin = std::chrono::high_resolution_clock::now();
+
+    begin = omp_get_wtime();
     for (int i=0; i<N; i++){
-        naive_interp->getAllValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
+        context->r = buff_r[i];
+        context->z = buff_z[i];
+        bicubic_interp->getValues(context);
+        // bicubic_interp->dummy(context);
     }
-    end = std::chrono::high_resolution_clock::now();
-    elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Serial interpolation time for %d iterations: %f\n", N, elapsed.count() * 1e-9);
+    end = omp_get_wtime();
+    elapsed = end-begin;
 
-    // Interpolation object with std::vector for local thread storage
+    printf("Serial interpolation time for %d iterations: %f\n", N, elapsed);
 
-    BICUBIC_INTERP_OMP_TEST *bicubic_vector_omp_test = new BICUBIC_INTERP_OMP_TEST();
-    bicubic_vector_omp_test->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
-    bicubic_vector_omp_test->prepareContainers(THREAD_NUM);
-
-    double r_tmp = 8.0;
-    double z_tmp = 0.0;
-
-    // DEPRECATED
     // OMP WITH ONE OBJECT
-    begin = std::chrono::high_resolution_clock::now();
-    #pragma omp parallel private(tid, offset, index, fval, fvaldx, fvaldy, fvaldxdy)
+    // begin = std::chrono::high_resolution_clock::now();
+    int sum = 0;
+    begin = omp_get_wtime();
+
+    #pragma omp parallel
     {
-        tid = omp_get_thread_num();
-        offset = tid * chunk_N;
-        #pragma omp for schedule(static)
-        for (int i=0; i<chunk_N; i++){
-            index = offset + i;
-            bicubic_vector_omp_test->getAllValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy, tid);
-            // bicubic_vector_omp_test->interpolate(10, 10, tid);
-            // bicubic_vector_omp_test->rcin(8.0, 0.0, fvaldx, fvaldy ,tid);
+        // auto a{bicubic_interp};
+
+        //Class that holds all the data as copies.
+        BI_DATA *omp_context = new BI_DATA();
+        bicubic_interp->populateContext(omp_context);
+        // double *r = &buff_r[0];
+        // double *z = &buff_z[0];
+        #pragma omp for
+        for (int i=0; i<N; i++){
+            omp_context->r = buff_r[i];
+            omp_context->z = buff_z[i];
+            bicubic_interp->getValues(omp_context);
         }
+        // This is still on the parallel block
     }
-
-    end = std::chrono::high_resolution_clock::now();
-    elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Parallel interpolation time for %d iterations with %d threads: %f\n", N, THREAD_NUM, elapsed.count() * 1e-9);
-
-    // OMP WITH THREAD_NUM OBJECTS.
-    begin = std::chrono::high_resolution_clock::now();
-    #pragma omp parallel private(tid, offset, index, fval, fvaldx, fvaldy, fvaldxdy)
-    {
-        tid = omp_get_thread_num();
-        offset = tid * chunk_N;
-
-        #pragma omp for schedule(static)
-        for (int i=0; i<chunk_N; i++){
-            index = offset + i;
-            naive_interpolators[tid]->getAllValues(buff_r[index], buff_z[index], fval, fvaldx, fvaldy, fvaldxdy);
-            // naive_interpolators[tid]->interpolate(10, 10);
-            // naive_interpolators[tid]->rcin(8.0, 0.0, fvaldx, fvaldy);
-        }
-    }
-
-    end = std::chrono::high_resolution_clock::now();
-    elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
-    printf("Parallel interpolation time for %d iterations with %d threads and %d separate interpolator objects: %f\n", N, THREAD_NUM, THREAD_NUM, elapsed.count() * 1e-9);
-
-
-    return 0;
+    end = omp_get_wtime();
+    elapsed = end-begin;
+    printf("Parallel interpolation time for %d iterations with %d threads: %f\n", N, THREAD_NUM, elapsed);
+    printf("Sum %d\n", sum);
 }

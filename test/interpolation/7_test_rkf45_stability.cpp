@@ -24,6 +24,7 @@ One can plot the contents simply with
    plt.show()
 */
 
+#include <cmath>
 #include <eqdsk_drsep10_data.hpp>
 #include <rkf45.hpp>
 #include <bicubic.hpp>
@@ -48,7 +49,6 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers();
     naive_interp->setArrays(drsep10_Rs, drsep10_Zs, reshaped_Psi);
     double drsep10_fpolvacuum = -32.86;
     solver->set_vacuum_fpol(drsep10_fpolvacuum);
@@ -67,17 +67,25 @@ int main(){
     y[0] = 6.4;
     y[1] = 0.0;
 
-    double dummy, flux, new_flux;
+    BI_DATA *context = new BI_DATA();
+    naive_interp->populateContext(context);
+    double dummy, flux;
     // Get the initial flux value to compare on the new locations.
-    naive_interp->getValues(y[0], y[1],  flux, dummy, dummy);
+    context->r = y[0];
+    context->z = y[1];
+    naive_interp->getValues(context);
+    flux = context->val;
     unsigned int counter=0;
     unsigned int N=1000000;
+
     while (counter < N){
         new_time = time + time_step;
         flag = solver->r8_rkf45(y, yp, &time, new_time, &relerr, abserr, flag);
         // printf("%f %f %d\n", y[0], y[1], flag);
-        naive_interp->getValues(y[0], y[1],  new_flux, dummy, dummy);
-        dummy = fabs(new_flux - flux);
+        context->r = y[0];
+        context->z = y[1];
+        naive_interp->getValues(context);
+        dummy = std::fabs(context->val - flux);
         printf("%f %f %f %e\n", time / (2 * 3.14), y[0], y[1], fabs(dummy / flux));
         // Set the flag back to 2 and ignore other messages from the solver.
         flag = 2;

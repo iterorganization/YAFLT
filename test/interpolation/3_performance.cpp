@@ -34,8 +34,11 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers(); // DUMMY DEPRECATED
     naive_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
+
+    BI_DATA *context = new BI_DATA();
+
+    naive_interp->populateContext(context);
 
     // Alglib interpolator
     alglib::real_1d_array R, Z, Psi;
@@ -89,7 +92,13 @@ int main(){
 
     begin = std::chrono::high_resolution_clock::now();
     for (int i=0; i<N; i++){
-        naive_interp->getAllValues(buff_r[i], buff_z[i], fval, fvaldx, fvaldy, fvaldxdy);
+        context->r = buff_r[i];
+        context->z = buff_z[i];
+
+        naive_interp->getValues(context);
+        fval = context->val;
+        fvaldx = context->valdx;
+        fvaldy = context->valdy;
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);

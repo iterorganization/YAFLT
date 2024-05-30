@@ -29,9 +29,10 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers();
     naive_interp->setArrays(baseline_r, baseline_z, reshaped_Psi);
+    BI_DATA *context = new BI_DATA();
 
+    naive_interp->populateContext(context);
     // Alglib interpolator
     alglib::real_1d_array R, Z, Psi;
     alglib::spline2dinterpolant alglib_interp;
@@ -67,11 +68,13 @@ int main(){
 
         buff_r = fwp17_r[i];
         buff_z = fwp17_z[i];
-        naive_interp->getValues(buff_r, buff_z, naive_fval, naive_fvaldx, naive_fvaldy);
+        context->r = buff_r;
+        context->z = buff_z;
+        naive_interp->getValues(context);
         spline2ddiff(alglib_interp, buff_r, buff_z, alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
 
         printf("Point %f %f\n", buff_r, buff_z);
-        printf("Naive  %f %f %f\n", naive_fval, naive_fvaldx, naive_fvaldy);
+        printf("Naive  %f %f %f\n", context->val, context->valdx, context->valdy);
         printf("Alglib %f %f %f\n", alglib_fval, alglib_fvaldx, alglib_fvaldy);
 
     }

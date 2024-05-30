@@ -180,9 +180,7 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers();
     naive_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
-
 
     double *arr_x, *arr_y, *arr_f, *arr_fdx, *arr_fdy, *arr_fdxdy;
     arr_x = new double [n_cols];

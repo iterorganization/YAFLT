@@ -17,7 +17,7 @@
 int main(){
     srand(time(NULL));
     // Prepare the naive interpolation.
-    BICUBIC_INTERP *naive_interp = new BICUBIC_INTERP();
+    BICUBIC_INTERP *bicubic_interp = new BICUBIC_INTERP();
     int n_cols = eq3_Rs.size();
     int n_rows = eq3_Zs.size();
 
@@ -31,8 +31,7 @@ int main(){
         // reshaped_Psi.insert(reshaped_Psi.begin(), buffer);
         reshaped_Psi.push_back(buffer);
     }
-    naive_interp->prepareContainers();
-    naive_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
+    bicubic_interp->setArrays(eq3_Rs, eq3_Zs, reshaped_Psi);
 
     // Alglib interpolator
     alglib::real_1d_array R, Z, Psi;
@@ -69,14 +68,28 @@ int main(){
     bool print;
     int counts=0;
     double abs_max_psi=-1, abs_max_psidx=-1, abs_max_psidy=-1, buff;
+    double abs_max_r=0.0;
+    double abs_max_z=0.0;
+
+    BI_DATA *context = new BI_DATA();
+
+    bicubic_interp->populateContext(context);
+
     for (int i=0; i<N; i++){
         print=false;
         buff_x = rmin + rdiff * rand() / RAND_MAX;
         buff_y = zmin + zdiff * rand() / RAND_MAX;
-        naive_interp->getValues(buff_x, buff_y, naive_fval, naive_fvaldx, naive_fvaldy);
+
+
+        context->r = buff_x;
+        context->z = buff_y;
+        bicubic_interp->getValues(context);
+        naive_fval = context->val;
+        naive_fvaldx = context->valdx;
+        naive_fvaldy = context->valdy;
         spline2ddiff(alglib_interp, buff_x, buff_y, alglib_fval, alglib_fvaldx, alglib_fvaldy, alglib_fvaldxdy);
         buff = std::fabs(naive_fval - alglib_fval) / alglib_fval;
-        if (buff > 0.03) {
+        if (buff > 0.001) {
             print=true;
         }
         if (buff > abs_max_psi) {
@@ -84,19 +97,23 @@ int main(){
         }
 
         buff = std::fabs(naive_fvaldx - alglib_fvaldx) / alglib_fvaldx;
-        if (buff > 0.03) {
+        if (buff > 0.001) {
             print=true;
         }
         if (buff > abs_max_psidx) {
             abs_max_psidx = buff;
+            abs_max_r=buff_x;
+            abs_max_z=buff_y;
         }
 
         buff = std::fabs(naive_fvaldy - alglib_fvaldy) / alglib_fvaldy;
-        if (buff > 0.03) {
+        if (buff > 0.001) {
             print=true;
         }
         if (buff > abs_max_psidy) {
             abs_max_psidy = buff;
+            abs_max_r=buff_x;
+            abs_max_z=buff_y;
         }
 
         if (print) {
@@ -107,9 +124,13 @@ int main(){
         }
     }
     printf("Total tries: %d\n", N);
-    printf("Number of high error points: %d\n", counts);
+    double ratio=(double)counts/N;
+    printf("Number of high error points: %d (%.2f %)\n", counts, ratio*100);
     printf("Maximum relative error psi: %f\n", abs_max_psi);
     printf("Maximum relative error psidx: %f\n", abs_max_psidx);
     printf("Maximum relative error psidy: %f\n", abs_max_psidy);
+    printf("Location %f %f\n", abs_max_r, abs_max_z);
+    printf("R goes from %f to %f\n", rmin, rmax);
+    printf("Z goes from %f to %f\n", zmin, zmax);
     return 0;
 }
