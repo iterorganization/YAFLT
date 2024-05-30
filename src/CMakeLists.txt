@@ -29,9 +29,10 @@ add_library(flt SHARED ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
 
 # Link embree and add include directories for dependencies.
 foreach(target flt_static flt)
-    target_link_libraries(${target} ${EMBREE_LIBRARY})
+    target_link_libraries(${target} PUBLIC ${EMBREE_LIBRARY})
     target_include_directories(${target} PUBLIC ${EMBREE_INCLUDE_DIRS})
     target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_link_libraries(${target} PUBLIC OpenMP::OpenMP_CXX)
 endforeach(target)
 
 # Add the headers to the PUBLIC_HEADER property so that they get installed.
