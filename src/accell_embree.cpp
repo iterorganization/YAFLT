@@ -1,3 +1,4 @@
+#include "embree3/rtcore_scene.h"
 #include <embree3/rtcore.h>
 #include <accell_embree.hpp>
 
@@ -23,6 +24,10 @@ EmbreeAccell::EmbreeAccell(bool initialize){
         createDevice();
         createScene();
     }
+
+    m_rayHit = RTCRayHit();
+    m_rayContext = RTCIntersectContext();
+    rtcInitIntersectContext(&m_rayContext);
 }
 
 EmbreeAccell::~EmbreeAccell(){
@@ -202,3 +207,38 @@ void EmbreeAccell::castRay(RTCRayHit *ray, RTCIntersectContext *context){
     rtcIntersect1(m_scene, context, ray);
 }
 
+// Functions for Cython (so no Embree is needed to be included)
+
+void EmbreeAccell::castRay(float ox, float oy, float oz, float dx, float dy, float dz,
+                           double tnear, double tfar){
+    m_rayHit.ray.org_x = ox;
+    m_rayHit.ray.org_y = oy;
+    m_rayHit.ray.org_z = oz;
+    m_rayHit.ray.dir_x = dx;
+    m_rayHit.ray.dir_y = dy;
+    m_rayHit.ray.dir_z = dz;
+    m_rayHit.ray.tnear = tnear;
+    m_rayHit.ray.tfar = tfar;
+    m_rayHit.ray.mask = 0;
+    m_rayHit.ray.flags = 0;
+    m_rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+    m_rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+    rtcIntersect1(m_scene, &m_rayContext, &m_rayHit);
+}
+
+bool EmbreeAccell::checkIfHit(){
+    if (m_rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID){
+        return true;
+    }
+    return false;
+}
+
+int EmbreeAccell::returnGeomId(){
+    return (int) m_rayHit.hit.geomID;
+}
+
+int EmbreeAccell::returnPrimId(){
+    /// It makes no sense why the geomID in Embree documentation is called the
+    /// primitive ID and the primID is called the geometry ID... Maybe typo.
+    return (int) m_rayHit.hit.primID;
+}

@@ -27,6 +27,12 @@ private:
     /// shadowing geometry.
     bool m_isEmpty = true;
 
+
+    // Private variables for when we do not want to use only Embree in Cython
+    // or other applications and do not want to have direct calls to Embree.
+    RTCRayHit m_rayHit;
+    RTCIntersectContext m_rayContext;
+
 public:
     EmbreeAccell(bool initDevice=true);
     ~EmbreeAccell();
@@ -66,6 +72,14 @@ public:
     /// @param[in, out] rayHit, contains the information of the ray and the hit
     /// @param[in] rayContext, contains other information relevant to ray tracing
     void castRay(RTCRayHit *rayHit, RTCIntersectContext *rayContext);
+
+
+    /// Functions for Cython exposure!
+    void castRay(float ox, float oy, float oz, float dx, float dy, float dz,
+                 double tnear, double tfar);
+    bool checkIfHit();
+    int returnGeomId();
+    int returnPrimId();
 };
 
 #endif /*ACCELL_EMBREE_H*/

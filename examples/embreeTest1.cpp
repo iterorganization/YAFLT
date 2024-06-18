@@ -54,6 +54,13 @@ int main(){
     else
         std::cout << "intersect: 0" << std::endl;
 
+    // Now try it the other way
+    obj2->castRay(0, 0, -1, 0, 0, 1, tnear, tfar);
+    if (obj2->checkIfHit())
+        std::cout << "intersect: " << intersect << std::endl;
+    else
+        std::cout << "intersect: 0" << std::endl;
+
     rayHit.ray.org_x = 1;
     rayHit.ray.org_y = 1;
     rayHit.ray.org_z = -1;
@@ -69,6 +76,13 @@ int main(){
 
     intersect = rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
     if (intersect == true)
+        std::cout << "intersect: " << intersect << std::endl;
+    else
+        std::cout << "intersect: 0" << std::endl;
+
+    // Now try it the other way
+    obj2->castRay(1, 1, -1, 0, 0, 1, tnear, tfar);
+    if (obj2->checkIfHit())
         std::cout << "intersect: " << intersect << std::endl;
     else
         std::cout << "intersect: 0" << std::endl;
