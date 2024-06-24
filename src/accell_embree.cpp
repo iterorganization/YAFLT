@@ -1,4 +1,3 @@
-#include "embree3/rtcore_scene.h"
 #include <embree3/rtcore.h>
 #include <accell_embree.hpp>
 

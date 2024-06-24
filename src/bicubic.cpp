@@ -2,8 +2,6 @@
 #include <stdio.h>
 #include <cmath>
 
-#define NDEBUG
-
 double __clip(double x, double lower, double upper){
     const double t = x < lower ? lower : x;
     return t > upper ? upper : t;
