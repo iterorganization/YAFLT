@@ -1,12 +1,8 @@
-#include <embree3/rtcore.h>
 #include <accell_embree.hpp>
 
 #ifndef NDEBUG
 #include <iostream>
 #endif
-
-#define OMP_INT_PADDING 8
-
 
 // We will register this error handler with the device in createDevice(),
 // so that we are automatically informed on errors.
