@@ -76,8 +76,9 @@ public:
     /// Obtain the function value and its first partial derivatives at point
     /// (x, y). **DOES NOT EXPTRAPOLATE**. If the Query point points outside
     /// the numerical domain defined by the function domain, it is
-    /// automatically clipped o the border.
+    /// automatically clipped to the border.
     void getValues(BI_DATA *context);
+    void getSecondDerivativeValues(BI_DATA *context);
 
 };
 #endif /*BICUBIC_H*/

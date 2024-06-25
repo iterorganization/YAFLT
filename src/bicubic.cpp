@@ -360,10 +360,155 @@ void BICUBIC_INTERP::getValues(BI_DATA *context){
             a9 * cell_x * 2 * cell_y + /*a[1, 2]*/ \
             a10 * cell_x2 * 2 * cell_y + /*a[2, 2]*/ \
             a11 * cell_x2 * cell_x * 2 * cell_y + /*a[3, 2]*/ \
-            a12 * 3 * cell_y * cell_y + /*a[0, 3]*/ \
+            a12 * 3 * cell_y2 + /*a[0, 3]*/ \
             a13 * cell_x * 3 * cell_y2 + /*a[1, 3]*/ \
             a14 * cell_x2 * 3 * cell_y2 + /*a[2, 3]*/ \
             a15 * cell_x2 * cell_x * 3 * cell_y2 /*a[3, 3]*/;
+
+    // Apply rectilinear factors
+    context->valdx = context->valdx / context->dx;
+    context->valdy = context->valdy / context->dy;
+
+    // Equivalent to the following.
+    // int index =0;
+    // for (int j=0; j<4;j++){
+    //     for (int i=0; i<4;i++){
+    //         index = j * 4 + i;
+    //         val = val + context->a[index] * pow(m_cell_x, i) * pow(m_celly, j);
+    //         if (i != 0){
+    //             valdx = valdx + context->a[index] * i * pow(m_cell_x, i - 1) * pow(m_celly, j);
+    //         }
+    //         if (j != 0){
+    //             valdy = valdy + context->a[index] * j * pow(m_cell_x, i) * pow(m_celly, j - 1);
+    //         }
+    //         if (i != 0 && j != 0){
+    //             valdy = valdy + context->a[index] * i * j * pow(m_cell_x, i - 1) * pow(m_celly, j - 1);
+    //         }
+    //     }
+    // }
+
+};
+
+// void BICUBIC_INTERP::getValues(BI_DATA *context){
+void BICUBIC_INTERP::getSecondDerivativeValues(BI_DATA *context){
+    // Function for obtaining values inside the X, Y domain.
+#ifndef NDEBUG
+    printf("GetValues %f %f\n", context->r, context->z);
+#endif
+    double x,y;
+
+    /// Output
+    context->val = 0;
+    context->valdx = 0;
+    context->valdy = 0;
+#ifndef NDEBUG
+    printf("Clipping\n");
+#endif
+    x = __clip(context->r, context->minx, context->maxx);
+    y = __clip(context->z, context->miny, context->maxy);
+
+    // Calculate relative cell position
+    int ind_x, ind_y;
+    double cell_x, cell_y;
+
+    // Get the index
+    ind_x = (int) ((x - context->minx)/ context->dx);
+    ind_y = (int) ((y - context->miny)/ context->dy);
+
+    // Calculate the position in cell
+    cell_x = (x - m_x[ind_x]) / context->dx;
+    // Upper range clip
+    if (ind_x >= context->nx - 1){
+        ind_x = context->nx - 2;
+        cell_x = 1.0;
+    }
+
+    // Calculate the position in cell
+    cell_y = (y - m_y[ind_y]) / context->dy;
+    // Upper range clip
+    if (ind_y >= context->ny - 1){
+        ind_y = context->ny - 2;
+        cell_y = 1.0;
+    }
+
+    // if (ind_x != context->col || ind_y != context->row){
+    //     // We are in the same cell, no recomputation needed.
+    //     context->col = ind_x;
+    //     context->row = ind_y;
+    //     interpolate(context->row, context->col, context->a);
+    // }
+
+    double cell_x2 = cell_x * cell_x;
+    double cell_y2 = cell_y * cell_y;
+
+    double a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
+    int offset;
+    // a0 = context->a[0];
+    // a1 = context->a[1];
+    // a2 = context->a[2];
+    // a3 = context->a[3];
+    // a4 = context->a[4];
+    // a5 = context->a[5];
+    // a6 = context->a[6];
+    // a7 = context->a[7];
+    // a8 = context->a[8];
+    // a9 = context->a[9];
+    // a10 = context->a[10];
+    // a11 = context->a[11];
+    // a12 = context->a[12];
+    // a13 = context->a[13];
+    // a14 = context->a[14];
+    // a15 = context->a[15];
+    offset = (ind_y * m_nx + ind_x)*16;
+    a0 = m_a[offset + 0];
+    a1 = m_a[offset + 1];
+    a2 = m_a[offset + 2];
+    a3 = m_a[offset + 3];
+    a4 = m_a[offset + 4];
+    a5 = m_a[offset + 5];
+    a6 = m_a[offset + 6];
+    a7 = m_a[offset + 7];
+    a8 = m_a[offset + 8];
+    a9 = m_a[offset + 9];
+    a10 = m_a[offset + 10];
+    a11 = m_a[offset + 11];
+    a12 = m_a[offset + 12];
+    a13 = m_a[offset + 13];
+    a14 = m_a[offset + 14];
+    a15 = m_a[offset + 15];
+
+    // Actually the mixed dxdy value.
+    double val = 0.0;
+    val += a5 + /*a[1, 1]*/ \
+          a6 * 2 * cell_x + /*a[2, 1]*/ \
+          a7 * 3 * cell_x2 + /*a[3, 1]*/ \
+          a9 * 2 * cell_y + /*a[1, 2]*/ \
+          a10 * 4 * cell_x * cell_y + /*a[2, 2]*/ \
+          a11 * 6 * cell_x2 * cell_y2 + /*a[3, 2]*/ \
+          a13 * 3 * cell_y2 + /*a[1, 3]*/ \
+          a14 * 6 * cell_x * cell_y2 + /*a[2, 3]*/ \
+          a15 * 9 * cell_x2 * cell_y2 /*a[3, 3]*/;
+    context->val = val;
+
+    // Get partial derivative dxdx. Second derivative
+    context->valdx = a2 * 2  + /*a[2, 0]*/ \
+            a3 * 6 * cell_x  + /*a[3, 0]*/ \
+            a6 * 2 * cell_y + /*a[2, 1]*/ \
+            a7 * 6 * cell_x * cell_y + /*a[3, 1]*/ \
+            a10 * 2 * cell_y * cell_y + /*a[2, 2]*/ \
+            a11 * 6 * cell_x * cell_y2 + /*a[3, 2]*/ \
+            a14 * 2 * cell_y2 * cell_y + /*a[2, 3]*/ \
+            a15 * 6 * cell_x * cell_y2 * cell_y /*a[3, 3]*/;
+
+    // Get partial derivative dydy. Second derivative
+    context->valdy = a8 * 2 + /*a[0, 2]*/ \
+            a9 * cell_x * 2 + /*a[1, 2]*/ \
+            a10 * cell_x2 * 2 + /*a[2, 2]*/ \
+            a11 * cell_x2 * cell_x * 2 + /*a[3, 2]*/ \
+            a12 * 6 * cell_y + /*a[0, 3]*/ \
+            a13 * cell_x * 6 * cell_y + /*a[1, 3]*/ \
+            a14 * cell_x2 * 6 * cell_y + /*a[2, 3]*/ \
+            a15 * cell_x2 * cell_x * 6 * cell_y /*a[3, 3]*/;
 
     // Apply rectilinear factors
     context->valdx = context->valdx / context->dx;
