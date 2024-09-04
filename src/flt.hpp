@@ -137,7 +137,7 @@ private:
 
 public:
     FLT();
-    ~FLT(){};
+    ~FLT();
 
     /// Output vector. Resized when the origin points are specified. This one
     /// contains geometry IDs which are >= 0 of stored geometries in embree

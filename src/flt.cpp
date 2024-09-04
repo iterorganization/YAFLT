@@ -12,6 +12,11 @@ FLT::FLT(){
     return;
 }
 
+FLT::~FLT(){
+    delete m_interp_psi;
+    return;
+}
+
 void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){
     m_NDIMR = NDIMR; // Number of rows
     m_NDIMZ = NDIMZ; // Number of columns
@@ -101,6 +106,7 @@ void FLT::getBCyln(double r, double z, std::vector<double> &out){
 
     out[0] = sqrt(ctx->valdx * ctx->valdx + ctx->valdy * ctx->valdy) / r;
     out[1] = m_vacuum_fpol / r; // Bphi
+    delete ctx;
 }
 
 void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
@@ -134,6 +140,7 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
     out[0] = br * cos(phi) - sin(phi) * bphi;
     out[1] = br * sin(phi) + cos(phi) * bphi;
     out[2] = bz;
+    delete ctx;
     // magVec.push_back(br * cos(phi) - sin(phi) * bphi);
     // magVec.push_back(br * sin(phi) + cos(phi) * bphi);
     // magVec.push_back(bz);
@@ -142,14 +149,16 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
 
 double FLT::getPoloidalFlux(double r, double z){
     // Returns the value of the poloidal flux at point (r,z).
+    double out;
     BI_DATA *ctx = new BI_DATA();
     m_interp_psi->populateContext(ctx);
 
     ctx->r = r - m_r_move;
     ctx->z = z - m_z_move;
     m_interp_psi->getValues(ctx);
-
-    return ctx->val;
+    out = ctx->val;
+    delete ctx;
+    return out;
 }
 
 void FLT::setEmbreeObj(EmbreeAccell* accellObj){
@@ -249,7 +258,7 @@ void FLT::runFLT(){
         RTCIntersectContext rayContext = RTCIntersectContext();
         rtcInitIntersectContext(&rayContext);
         // Ray tracing variables that are put into the RTCRayHit struct.
-        double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz, tnear, tfar;
+        double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
         // y[2] and yp[2] correspond to (R, Z) and value of the derivative of the
         // function we wish to solve.
         double y[2], yp[2];
@@ -436,7 +445,6 @@ void FLT::runFLT(){
                 rayHit.ray.flags = 0;
                 rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
                 rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
-                // printf("ox=%f oy=%f oz=%f dx=%f dy=%f dz=%f norm=%f\n", ox, oy, oz, dx, dy, dz, norm);
                 m_embree_obj->castRay(&rayHit, &rayContext);
                 if (rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
                     intersect=true;
@@ -473,6 +481,7 @@ void FLT::runFLT(){
             }
             m_out_fieldline_lengths[i] = total_length;
             } // END MAIN FOR LOOP
+        delete interp_context;
     } // END OF PRAGMA OMP
 }
 
@@ -600,6 +609,7 @@ void FLT::getFL(const double r, const double z, const double phi,
     // Embree constructs
     RTCRayHit rayHit = RTCRayHit();
     RTCIntersectContext rayContext = RTCIntersectContext();
+    rtcInitIntersectContext(&rayContext);
 
     // Ray tracing variables that are put into the RTCRayHit struct.
     double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
@@ -800,6 +810,7 @@ void FLT::getFL(const double r, const double z, const double phi,
 
 
     } // END WHILE LOOP. EITHER INRESECTION OR MAX LENGTH ACCHIEVED
+    delete interp_context;
 }
 
 void FLT::flt_pde(double y[2], double yp[2], BI_DATA *context){

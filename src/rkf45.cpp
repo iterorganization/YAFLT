@@ -213,6 +213,7 @@ void RKF45::r8_flt(double t, double y[2], double yp[2]){
     factor = y[0] / m_vacuum_fpol;
     yp[0] = - context->valdy * factor;
     yp[1] =   context->valdx * factor;
+    delete context;
 }
 
 void RKF45::r8_fehl(double y[2], double t, double h, double yp[2],
