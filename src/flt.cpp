@@ -69,8 +69,7 @@ void FLT::setShift(double rmove, double zmove){
 }
 
 bool FLT::prepareInterpolation(){
-    // Allocates and creates the interpolation objects. As well as creates the
-    // RKF45 object.
+    // Allocates and creates the interpolation objects.
 
     int n_rows, n_cols;
     std::vector<double> buffer;

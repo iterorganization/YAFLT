@@ -103,8 +103,8 @@ Users can control the number of CPUs to be used in parallel.
 In order to build L2G_cpp the following packages are required (sub-dependencies
 are not written):
 
- - Embree >= 3.12.2
- - CMake >= 3.12.1
+ - Embree >= 3
+ - CMake >= 3.10
 
 If embree is not installed via a system, but it is a custom/environment
 installation then you have to be sure that CMake can find the FindX scripts
@@ -126,8 +126,8 @@ compiler, either part of visual studio or other ways.
 
 As with Linux you require the following libraries:
 
- - Embree >= 3.12.2
- - CMake >= 3.12.2
+ - Embree >= 3
+ - CMake >= 3.10
 
 Since this will be a static compilation, you can download the Embree library
 and simply tell CMake where the CMake configuration files are located.

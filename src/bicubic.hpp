@@ -22,6 +22,14 @@ struct alignas(64) BI_DATA
     int ny=0;
 };
 
+/// Class that implements the 2D bicubic interpolation algorithm. The aim is to
+/// have as light-as-possible code that is accurate and most importantly very
+/// fast. The test directory contains the testing programs to see if the code
+/// is accurate enough, fast enough and if possible scalable with more cores
+/// via OpenMP. OpenMP scalability is ensured with the help if BI_DATA struct.
+/// It acts as a context for each call request, reducing the number of OpenMP
+/// false-sharing that might happen if the variables in the struct were class
+/// attributes.
 class BICUBIC_INTERP
 {
 

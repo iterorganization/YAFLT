@@ -18,7 +18,9 @@
 #include <vector>
 
 /// Class that solves the FL equation to obtain FL segments and checking if
-/// there is any intersection with the shadowing geometry.
+/// there is any intersection with the shadowing geometry. The FL equation is
+/// solved in a Cylindrical coordinate system and by using an axisymmetric
+/// plasma equilibrium input data.
 class FLT
 {
 private:
@@ -148,7 +150,7 @@ public:
     std::vector<int> m_out_geom_hit_ids;
     /// Output vector. Resized when the origin points are specified. This one
     /// contains primite IDs which are >= 0 of triangles of a stored geometry
-    /// in the embree object. -1 means that the particular fieldline reach
+    /// in the embree object. -1 means that the particular fieldline reached
     /// its maximum fieldline length. -2 means that the fieldline left the
     /// defined computational area of the equilibrium grid (outside the
     /// min/max of [R, Z])
