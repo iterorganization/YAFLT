@@ -1,3 +1,6 @@
+// This example shows how to obtain an arbitrary fieldline. No intersection
+// tests.
+
 #include <flt.hpp>
 #include <polylineWriter.cpp>
 

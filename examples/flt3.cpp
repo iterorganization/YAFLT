@@ -1,3 +1,6 @@
+// This example shows how to obtain fieldlines starting from the barycenter of
+// a triangular 2D mesh. No intersection tests.
+
 #define _USE_MATH_DEFINES
 #include <flt.hpp>
 #include <polylineWriter.cpp>

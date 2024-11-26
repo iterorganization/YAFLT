@@ -1,3 +1,8 @@
+// An example limiter equilibrium test where we obtain the lengths of the
+// fieldlines and the mask showing which fieldlines are effectively "shadowed",
+// or which fieldlines intersect early with a geometry we loaded and we call as
+// shadow geometry.
+
 #define _USE_MATH_DEFINES
 #include <flt.hpp>
 #include <polylineWriter.cpp>
