@@ -59,9 +59,16 @@ public:
     /// derivative. This function obtains the derivative values by using higher
     /// finite difference table (combination of central, forward and backward,
     /// depending where are we.).
+    /// @param[in] x is the X-axis 1D vector array of size Nx - Columns
+    /// @param[in] y is the Y-axis 1D vector array of size Ny - Rows
+    /// @param[in] f is the X-axis 2D vector array (vector of vectors) of size
+    ///              (Ny, Nx)
     void setArrays(std::vector<double> x, std::vector<double> y,
                    std::vector<std::vector<double>> f);
 
+    /// Function that sets the constant values to a BI_DATA context. Used once
+    /// on a BI_DATA construct after the setArrays was used and before calling
+    /// gevValues.
     void populateContext(BI_DATA *context){
         context->dx = m_dx;
         context->dy = m_dy;
@@ -76,8 +83,13 @@ public:
     /// Obtain the function value and its first partial derivatives at point
     /// (x, y). **DOES NOT EXPTRAPOLATE**. If the Query point points outside
     /// the numerical domain defined by the function domain, it is
-    /// automatically clipped to the border.
+    /// automatically clipped to the border. The BI_DATA construct holds the
+    /// arguments and return values altogether. You need to set the BI_DATA->r,
+    /// and BI_DATA->z and obtain the values in variables BI_DATA->val,
+    /// BI_DATA->valdx and BI_DATA->valdy.
     void getValues(BI_DATA *context);
+    /// This function is similar to getValues, except that it returns the
+    /// second derivative values on
     void getSecondDerivativeValues(BI_DATA *context);
 
 };

@@ -5,7 +5,12 @@
 #include <vector>
 
 /// Class for loading shadowing geometries to Embree, to be used for RayCasting
-/// when testing if a FL intersects the shadowing geometry.
+/// when testing if a FL intersects the shadowing geometry. In essence the
+/// setup for ray tracing is simple, for the purposes of Field Line Tracing and
+/// other simple ray tracing examples. All that is required is the
+/// loading/unloading of meshes (2D surface triangular meshes) and tests
+/// whether a line or ray intersects with the geometry, which loaded geometry
+/// and finally which triangle cell.
 class EmbreeAccell
 {
 private:
@@ -28,8 +33,9 @@ private:
     bool m_isEmpty = true;
 
 
-    // Private variables for when we do not want to use only Embree in Cython
-    // or other applications and do not want to have direct calls to Embree.
+    /// Private variables for when we want to use Embree in Cython or other
+    /// applications and do not want to have direct calls to Embree. Basically
+    /// variables for wrapping Embree calls.
     RTCRayHit m_rayHit;
     RTCIntersectContext m_rayContext;
 
@@ -57,6 +63,9 @@ public:
     /// @param[in] triangles 1D array containing all triangles (t1.p1, t1.p2,
     ///                      t1.p3, t2.p1, ...).
     /// @param[in] n_triangles Number of triangles (len(triangles)/3).
+    /// @param[out] geomId The id of the loaded geometry. This is used to
+    ///                    on order to understand which mesh or geometry is
+    ///                    intersected, when intersection occur.
     unsigned int commitMesh(float* vertices, long int n_vertices,
                             unsigned* triangles, long int n_triangles);
 
@@ -74,11 +83,36 @@ public:
     void castRay(RTCRayHit *rayHit, RTCIntersectContext *rayContext);
 
 
-    /// Functions for Cython exposure!
+    /// Function for performing ray tracing. After calling this function you
+    /// call checkIfHit to get confirmation if hit happened.
+    /// @param[in] ox X component of origin point
+    /// @param[in] oy Y component of origin point
+    /// @param[in] oz Z component of origin point
+    /// @param[in] dx X component of direction vector
+    /// @param[in] dy Y component of direction vector
+    /// @param[in] dz Z component of direction vector
+    /// @param[in] tnear Starting length along the direction vector to
+    ///                  check for intersection. 0 means that the ray starts at
+    ///                  the origin point
+    /// @param[in] tfar  Ending length along the direction vector to check
+    ///                  for intersection
     void castRay(float ox, float oy, float oz, float dx, float dy, float dz,
                  double tnear, double tfar);
+
+    /// Function that tells you if there is an intersection hit. Call this
+    /// after caling castRay.
+    ///  @param[out] hit A boolean, true if a geometry was hit, false
+    ///                  otherwise.
     bool checkIfHit();
+    /// This function returns the geometry ID if an intersection hit occured.
+    /// @param[out] geomId An integer of the geometry that was hit. This
+    ///                    integer corresponds to the integer of the geometry
+    ///                    loaded with commitMesh
     int returnGeomId();
+    /// This function returns the geometry ID if an intersection hit occured.
+    /// @param[out] primId An integer of the geometry that was hit. This
+    ///                    integer corresponds to the integer of the loaded
+    ///                    geometry
     int returnPrimId();
 };
 

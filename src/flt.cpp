@@ -494,10 +494,10 @@ void FLT::fehl_step(double y[2], double t, double h, double yp[2],
     // while the s holds the approximate solution. If the error is acceptable
     // then the approximate solution is the new solution.
 
+    // The factors are calculated based on Table II in Fehlberg, NASA Technical
+    // Report 287.
+
     // In this case we have a non-time dependant PDE
-
-    /// The PDE do not have dependence of time.
-
 
     // Use k6 as container for  calculating other k factors (used as argument
     // for the flt_pde method).
@@ -763,8 +763,8 @@ void FLT::getFL(const double r, const double z, const double phi,
         dx = dx / norm;
         dy = dy / norm;
         dz = dz / norm;
-        // Set the origina point of the ray into the struct here even if do not
-        // need FLT.
+        // Set the original point of the ray into the struct here even if do
+        // not need FLT.
         rayHit.ray.org_x = ox;
         rayHit.ray.org_y = oy;
         rayHit.ray.org_z = oz;

@@ -237,7 +237,8 @@ public:
     ///
     /// @param[in] value is the value at which we would like to avoid
     ///                  intersection test when following a FL. This value
-    ///                  should be small, in the range of millimeters.
+    ///                  should be small, in the range of millimeters. Default
+    ///                  unit is meters.
     void setSelfIntersectionAvoidanceLength(double value) {m_self_intersection_avoidance_length = value;};
 
     /// Prepares the interpolation objects.
@@ -246,6 +247,7 @@ public:
     /// Sets the number of threads to use when running in parallel with OpenMP.
     /// The functions doesn't check the maximum value but insures the value
     /// is not below or equal 0.
+    /// @param[in] n is the number of desired CPU to run in parallel.
     void setNumberOfThreads(int n){
         if (n <= 0){
             n = 1;
@@ -264,7 +266,7 @@ public:
 
     /// Set the toroidal direction (positive (-1) or negative (1) orientation)
     /// for the input data.
-    /// @param[in] direction is a vector of size N containing the direction
+    /// @param[in] directions is a vector of size N containing the direction
     void setStartingFLDirection(std::vector<int> directions){m_directions=directions;};
 
 
@@ -273,14 +275,41 @@ public:
 
     /// The main function that performs the FLT on the input data set via
     /// functions setPoints and setStartingFLDirection
+
+    /// Start the FLT. When finished (successfully) the results will be stored
+    /// in the m_out_* attributes.
     void runFLT();
 
+    /// Get points of a fieldline starting from a (r, z, Phi) and in a selected
+    /// toroidal direction. Points are stored in the provided vector.
+    /// @param[in] r Starting R
+    /// @param[in] z Starting Z
+    /// @param[in] phi Starting toroidal angle
+    /// @param[in] direction Starting toroidal direction. (Positive means along
+    ///            the toroidal direction of the magnetic field)
+    /// @param[in, out] storage vector for storing points (continuously, as in
+    ///                         (r1, z1, phi1, r2, z2, phi2, ...))
     void getFL(const double r, const double z, const double phi,
                 const int direction, std::vector<double>& storage,
                 const bool with_flt);
 
     /// This is the RKF4(5) method for getting the next approximate solution to
-    /// a 2D system of PDEs (non-time-dependent).
+    /// a 2D system of PDEs (non-time-dependent). The factors are calculated
+    /// based on FORMULA 2 Table III in Fehlberg NASA Technical Report 287.
+    /// @param[in] y Is the initial [X, Y] (or [R, Z] in Cylindrical
+    ///                 coordinate system) point.
+    /// @param[in] t is the current parametric time or in the actual sense the
+    ///              current toroidal angle
+    /// @param[in] h is the current parametric time step or in the actual sense
+    ///              the current toroidal angle step
+    /// @param[in] yp is the derivative value in [R, Z] direction at y point
+    /// @param[in] k2 is the slope factor.
+    /// @param[in] k3 is the slope factor.
+    /// @param[in] k4 is the slope factor.
+    /// @param[in] k5 is the slope factor.
+    /// @param[in] k6 is the slope factor.
+    /// @param[in, out] context is the struct necessary for running
+    ///                 interpolation functions
     void fehl_step(double y[2], double t, double h, double yp[2], double k2[2],
                    double k3[2], double k4[2], double k5[2], double k6[2],
                    double s[2], BI_DATA *context);
@@ -292,7 +321,8 @@ public:
     ///            partial derivative values.
     /// @param[in, out] yp[2] holds the values of the partial derivatives at
     ///                 points (R, Z)
-    /// @param[in, out] context holds the interpolation information.
+    /// @param[in, out] context is the struct necessary for running
+    ///                 interpolation functions
     void flt_pde(double y[2], double yp[2], BI_DATA *context);
 
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad)

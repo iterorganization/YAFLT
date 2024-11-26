@@ -1,5 +1,4 @@
 #include "bicubic.hpp"
-#include <stdio.h>
 #include <cmath>
 
 double __clip(double x, double lower, double upper){
@@ -47,13 +46,11 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 
     // Now calcuate the derivatives
     // The following is the direction of Rows and Columns!!!
-    // o---------> X (R)
-    // |
-    // |
-    // |
-    // |
-    // v
-    // Y (Z)
+    //  o----> X (R)
+    //  |
+    //  |
+    //  v
+    //  Y (Z)
     // m_fdx is the partial derivative in R direciton
     m_fdx.resize(n_rows, std::vector<double>(n_cols));
     // m_fdy is the partial derivative in Z direction
@@ -63,18 +60,29 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 
     // m_a holds the interpolation constants
     m_a.resize(n_rows*n_cols*16);
-
     // Upper left border values - forward finite difference
+    //  o---+>
+    //  |   |
+    //  +---+
+    //  v
     m_fdx[0][0] = 0.5 * (m_f[0][1] - m_f[0][0]);
     m_fdy[0][0] = 0.5 * (m_f[1][0] - m_f[0][0]);
     m_fdxdy[0][0] = 0.25 * (m_f[1][1] - m_f[0][1] - m_f[1][0] + m_f[0][0]);
 
     // Upper right border values - backward finite difference
+    //  +---o>
+    //  |   |
+    //  +---+
+    //  v
     m_fdx[0][n_cols - 1] = 0.5 * (m_f[0][n_cols - 1] - m_f[0][n_cols - 2]);
     m_fdy[0][n_cols - 1] = 0.5 * (m_f[1][n_cols - 1] - m_f[0][n_cols - 1]);
     m_fdxdy[0][n_cols - 1] = 0.25 * (m_f[1][n_cols - 1] - m_f[0][n_cols - 1] - m_f[1][n_cols - 2] + m_f[0][n_cols - 2]);
 
     // Lower left border values - forward finite difference
+    //  +---+>
+    //  |   |
+    //  o---+
+    //  v
     m_fdx[n_rows - 1][0] = 0.5 * (m_f[n_rows - 1][1] - m_f[n_rows - 1][0]);
     m_fdy[n_rows - 1][0] = 0.5 * (m_f[n_rows - 1][0] - m_f[n_rows - 2][0]);
     m_fdxdy[n_rows - 1][0] = 0.25 * (m_f[n_rows - 1][1] - m_f[n_rows - 2][1] - m_f[n_rows - 1][0] + m_f[n_rows - 2][0]);
@@ -168,11 +176,13 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
         }
     }
 
-    int rp1;
-    int cp1;
-    int offset;
-    double b[16];
+    // Now for each cell, instead of re-calculating it when asking for function
+    // values, just calculate it now and store the results.
 
+    int rp1; // Index row plus 1
+    int cp1; // Index column plus 1
+    int offset; // Cell offset
+    double b[16];
     // r - row, c - col
     for(int r=0; r<n_rows-1;r++){
         for(int c=0; c<n_cols-1;c++){
@@ -199,7 +209,18 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
             b[13] = m_fdxdy[r][cp1];
             b[14] = m_fdxdy[rp1][c];
             b[15] = m_fdxdy[rp1][cp1];
+
+            // Offset as the m_a is a 1D array of size 16 x Number of cells
             offset = (r*n_cols + c)*16;
+
+            // The following is the unfurled solution of the linear  system of
+            // equations for bicubic interpolation. Basically the matrix has
+            // a lot of non-zero elements and the performance of the
+            // multiplication is better when you manually unfold it. Well the
+            // performance mattered when this block of code was calculated
+            // every time a value is interpolated in a new cell, now it's just
+            // moved here.
+
             m_a[offset + 0] = b[0];
             m_a[offset + 1] = b[4];
             m_a[offset + 2] = -3.0 * b[0]+3.0 * b[1]-2.0 * b[4]-1.0 * b[5];
@@ -264,34 +285,12 @@ void BICUBIC_INTERP::getValues(BI_DATA *context){
         cell_y = 1.0;
     }
 
-    // if (ind_x != context->col || ind_y != context->row){
-    //     // We are in the same cell, no recomputation needed.
-    //     context->col = ind_x;
-    //     context->row = ind_y;
-    //     interpolate(context->row, context->col, context->a);
-    // }
-
     double cell_x2 = cell_x * cell_x;
     double cell_y2 = cell_y * cell_y;
 
     double a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
     int offset;
-    // a0 = context->a[0];
-    // a1 = context->a[1];
-    // a2 = context->a[2];
-    // a3 = context->a[3];
-    // a4 = context->a[4];
-    // a5 = context->a[5];
-    // a6 = context->a[6];
-    // a7 = context->a[7];
-    // a8 = context->a[8];
-    // a9 = context->a[9];
-    // a10 = context->a[10];
-    // a11 = context->a[11];
-    // a12 = context->a[12];
-    // a13 = context->a[13];
-    // a14 = context->a[14];
-    // a15 = context->a[15];
+
     offset = (ind_y * m_nx + ind_x)*16;
     a0 = m_a[offset + 0];
     a1 = m_a[offset + 1];
@@ -441,30 +440,12 @@ void BICUBIC_INTERP::getSecondDerivativeValues(BI_DATA *context){
     double cell_x2 = cell_x * cell_x;
     double cell_y2 = cell_y * cell_y;
 
-    double a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
+    double a2, a3, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15;
     int offset;
-    // a0 = context->a[0];
-    // a1 = context->a[1];
-    // a2 = context->a[2];
-    // a3 = context->a[3];
-    // a4 = context->a[4];
-    // a5 = context->a[5];
-    // a6 = context->a[6];
-    // a7 = context->a[7];
-    // a8 = context->a[8];
-    // a9 = context->a[9];
-    // a10 = context->a[10];
-    // a11 = context->a[11];
-    // a12 = context->a[12];
-    // a13 = context->a[13];
-    // a14 = context->a[14];
-    // a15 = context->a[15];
+
     offset = (ind_y * m_nx + ind_x)*16;
-    a0 = m_a[offset + 0];
-    a1 = m_a[offset + 1];
     a2 = m_a[offset + 2];
     a3 = m_a[offset + 3];
-    a4 = m_a[offset + 4];
     a5 = m_a[offset + 5];
     a6 = m_a[offset + 6];
     a7 = m_a[offset + 7];

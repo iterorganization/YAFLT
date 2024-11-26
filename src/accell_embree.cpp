@@ -20,15 +20,15 @@ EmbreeAccell::EmbreeAccell(bool initialize){
         createScene();
     }
 
+    /// The following variables are used when we want to run in serial embree
+    /// functions and also used via Python for other purposes.
     m_rayHit = RTCRayHit();
     m_rayContext = RTCIntersectContext();
     rtcInitIntersectContext(&m_rayContext);
 }
 
 EmbreeAccell::~EmbreeAccell(){
-    if (m_device_created){
-        rtcReleaseDevice(m_device);
-    }
+    deleteDevice();
 }
 
 // Initializes Embree factory and essential objects
