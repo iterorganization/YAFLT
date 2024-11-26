@@ -39,7 +39,8 @@ The code that implements the bicubic spline interpolation method:
  - bicubic.hpp
  - bicubic.cpp
 
-The code that contains the RKF45 solver method:
+The code that contains the RKF45 solver method (not actually used in the flt
+code but used for testing the solver):
 
  - rkf45.cpp
  - rkf45.hpp
@@ -86,14 +87,14 @@ implementation.
 ## The theory
 
 To see which equations and logic are implemented look at the documentation of
-the python interface of the code.
+the python interface of the code. In essence the magnetic fieldlines are
+followed in an axysymmetric magnetic field in the cylindrical coordinate system
+and its segments are tested if they intersect any geometry with Embree.
 
 ## Parallelism
 
-The parallelism is not done in the C++ code but it is prepared in a way to be
-used parallel in threads (OpenMP). Current way parallelism is exploited via
-Cython OpenMP interface so that the settings of number of threads is controlled
-dynamically and can be operated by users of higher level interfaces.
+The code is run in parallel mode in the main functions runFLT in the C++ code.
+Users can control the number of CPUs to be used in parallel.
 
 ## Build
 

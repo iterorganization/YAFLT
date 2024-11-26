@@ -154,7 +154,7 @@ def obtain_the_inverse_matrix(A):
 def unroll_the_solution(A_inv):
     """If you observe the elements of the A_inv, most of the elements are 0.
     Unrolling it by hand does not yield a lot of code and it is much easier
-    for compiler to compile than having for loops.
+    for compiler to optimize than having for loops.
     """
 
     for j in range(16):
@@ -310,4 +310,5 @@ if __name__ == "__main__":
     # Print the unrolled code.
     unroll_the_solution(A_inv)
 
+    # Print the expressions for obtaining function values and derivatives
     obtain_expressions_for_function_values_and_derivatives()
