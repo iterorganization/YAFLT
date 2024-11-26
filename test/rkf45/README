@@ -1,0 +1,7 @@
+
+test_1_rkf45_stability.cpp - Tests the stability of the method by following a
+    magnetic surface for a large number of steps. At each step evaluate if the
+    new position is still on the magnetic surface or how much it differs from
+    the initial flux value (should be constant). Of course the resolution of
+    the input data affects the accuracy, nonetheless, the method itself should
+    have some control over it.

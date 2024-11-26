@@ -1,49 +1,19 @@
-#ALGLIB sources
-set(ALGLIB_SOURCES
-    ../include/alglib/alglibinternal.cpp
-    ../include/alglib/alglibmisc.cpp
-    ../include/alglib/ap.cpp
-    ../include/alglib/dataanalysis.cpp
-    ../include/alglib/diffequations.cpp
-    ../include/alglib/fasttransforms.cpp
-    ../include/alglib/integration.cpp
-    ../include/alglib/interpolation.cpp
-    ../include/alglib/linalg.cpp
-    ../include/alglib/optimization.cpp
-    ../include/alglib/solvers.cpp
-    ../include/alglib/specialfunctions.cpp
-    ../include/alglib/statistics.cpp
-)
+# Bicubic tests
+add_executable(test_1_accuracy ${CMAKE_CURRENT_SOURCE_DIR}/test_1_accuracy.cpp)
+target_link_libraries(test_1_accuracy flt_static)
 
-add_library(alglib_static STATIC ${ALGLIB_SOURCES})
-
-set(BICUBIC_SOURCES
-    ../../src/bicubic.cpp
-)
-
-add_library(bicubic_scalable STATIC ${BICUBIC_SOURCES})
-
-# add the executable
-foreach(target 1_accuracy 3_performance 4_derivative_eval 6_check_values 7_test_rkf45_stability 8_simple_test_case)
-    add_executable(${target} ${CMAKE_CURRENT_SOURCE_DIR}/${target}.cpp)
-    target_link_libraries(${target} flt_static)
-
-    # For linking example header data.
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include/alglib)
-    target_link_libraries(${target} alglib_static)
-    # install(TARGETS ${target} RUNTIME DESTINATION bin)
-endforeach()
-
+add_executable(test_2_serial_performance ${CMAKE_CURRENT_SOURCE_DIR}/test_2_serial_performance.cpp)
+target_link_libraries(test_2_serial_performance flt_static)
+target_include_directories(test_2_serial_performance PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 
 # OpenMP
 find_package(OpenMP)
 if (OPENMP_FOUND)
-    add_executable(9_omp_performance ${CMAKE_CURRENT_SOURCE_DIR}/9_omp_performance.cpp)
-    target_link_libraries(9_omp_performance PUBLIC flt_static)
-    # For linking example header data.
-    target_include_directories(9_omp_performance PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
-    target_link_libraries(9_omp_performance PUBLIC bicubic_scalable)
-    target_link_libraries(9_omp_performance PUBLIC OpenMP::OpenMP_CXX)
-
+    add_executable(test_3_omp_performance ${CMAKE_CURRENT_SOURCE_DIR}/test_3_omp_performance.cpp)
+    target_link_libraries(test_3_omp_performance flt_static)
+    target_include_directories(test_3_omp_performance PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 endif(OPENMP_FOUND)
+
+add_executable(test_4_finite_difference_check ${CMAKE_CURRENT_SOURCE_DIR}/test_4_finite_difference_check.cpp)
+target_link_libraries(test_4_finite_difference_check flt_static)
+target_include_directories(test_4_finite_difference_check PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)

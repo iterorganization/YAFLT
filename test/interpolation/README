@@ -1,6 +1,16 @@
-This folder contains test for comparing the naive implementation of the bicubic
-interpolation against ALGLIB++ implementation.
 
-1_accuracy.cpp - Compares difference in evaluated interpolations and
-                 derivatives
-2_performance.cpp - Compares the performance of the two implementations.
+test_1_accuracy.cpp - Tests the accuracy of the interpolation by intepolating
+    an analytical function (x - a)**2 * (y - b)**2 and seeing how many points
+    differ by more than .01%. It outputs a huge amount of text which can then
+    be used to debug in which regions the algorithm has issues (if you plot you
+    should see an L band). Use the plot_points.py on the output of the program.
+
+test_2_serial_performance.cpp - Measures the time the algorithm computes N
+    values in serial mode.
+
+test_3_omp_performance.cpp - Measures the time the algorithm computes N values
+    in serial and parallel mode. For evaluating performance scalability.
+
+test_4_finite_difference_check.cpp - Checking the derivative tables if
+    they are written exactly the same. Could be used to see different schemas
+    to be used to calculate derivative values.

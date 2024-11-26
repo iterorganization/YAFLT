@@ -1,0 +1,3 @@
+add_executable(test_1_rkf45_stability ${CMAKE_CURRENT_SOURCE_DIR}/test_1_rkf45_stability.cpp)
+target_link_libraries(test_1_rkf45_stability flt_static)
+target_include_directories(test_1_rkf45_stability PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../include)
