@@ -201,10 +201,6 @@ void FLT::runFLT(){
     //     return;
     // }
 
-#ifndef NDEBUG
-    printf("Starting up on %d cores\n", m_number_of_threads);
-    printf("In total %d points\n", n_points);
-#endif
 
     #pragma omp parallel num_threads(m_number_of_threads)
     {

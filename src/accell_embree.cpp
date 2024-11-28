@@ -1,17 +1,11 @@
 #include <accell_embree.hpp>
 
-#ifndef NDEBUG
-#include <iostream>
-#endif
 
 // We will register this error handler with the device in createDevice(),
 // so that we are automatically informed on errors.
 // This is extremely helpful for finding bugs in your code, prevents you
 // from having to add explicit error checking to each Embree API call.
 void error_handler(void *userPtr, const RTCError code, const char *str){
-#ifndef NDEBUG
-    std::cout << "error "<< code << ": " << str << std::endl;
-#endif
 }
 
 EmbreeAccell::EmbreeAccell(bool initialize){
@@ -34,19 +28,12 @@ EmbreeAccell::~EmbreeAccell(){
 // Initializes Embree factory and essential objects
 void EmbreeAccell::createDevice(){
     if (m_device_created){
-#ifndef NDEBUG
-        std::cout << "Error: device already created.";
-#endif
         return;
     }
 
     RTCDevice device = rtcNewDevice(NULL);
 
     if (!device) {
-#ifndef NDEBUG
-        std::cout << "Error " << rtcGetDeviceError(NULL);
-        std::cout << ": cannot create device" << std::endl;
-#endif
         return;
     }
 
@@ -60,9 +47,6 @@ void EmbreeAccell::deleteDevice(){
     // Deletes rtcDevice, and subsequently deletes the scene.
 
     if (!m_device_created){
-#ifndef NDEBUG
-        std::cout << "Error: no device to delete!";
-#endif
         return;
     }
 
@@ -79,17 +63,11 @@ void EmbreeAccell::deleteDevice(){
 void EmbreeAccell::createScene(){
     if (!m_device_created){
         // No device created, ergo we cannot create a scene.
-#ifndef NDEBUG
-        std::cout << "Error: cannot create a scene without a device.";
-#endif
         return;
     }
 
     if (m_scene_created){
         // Scene already exists
-#ifndef NDEBUG
-        std::cout << "Error: Scene already exists!";
-#endif
         return;
     }
 
@@ -103,9 +81,6 @@ void EmbreeAccell::createScene(){
 
 void EmbreeAccell::deleteScene(){
     if (!m_scene_created){
-#ifndef NDEBUG
-        std::cout << "Error: No scene to delete.";
-#endif
         return;
     }
 
@@ -117,10 +92,7 @@ unsigned int EmbreeAccell::commitMesh(float* vertices, long int n_vertices,
                               unsigned* triangles, long int n_triangles){
 
     if (!m_scene_created){
-#ifndef NDEBUG
-        std::cout << "Error: No scene created to which to commit the geometry!";
         return -1;
-#endif
     }
 
     // Commits a geometry, in this case a triangular mesh to the Embree scene.
@@ -139,9 +111,6 @@ unsigned int EmbreeAccell::commitMesh(float* vertices, long int n_vertices,
 
     if (rtc_vertices && rtc_indices)
     {
-#ifndef NDEBUG
-        std::cout << "Populating embree object" << std::endl;
-#endif
         for (long int i=0; i < n_vertices; i++){
             rtc_vertices[i] = vertices[i];
         }
@@ -151,10 +120,6 @@ unsigned int EmbreeAccell::commitMesh(float* vertices, long int n_vertices,
             rtc_indices[3 * i + 2] = triangles[3 * i + 2];
         }
     }
-#ifndef NDEBUG
-    std::cout << "Added " << n_vertices << " vertices." << std::endl;
-    std::cout << "Added " << n_triangles << " triangles." << std::endl;
-#endif
     // You must commit geometry objects when you are done setting them up,
     // or you will not get any intersections.
     rtcCommitGeometry(geom);
@@ -182,9 +147,6 @@ bool EmbreeAccell::deleteMesh(unsigned int geom_id){
     // to delete it, simply because either the geometry with such id does not
     // exist or of some internal error, the function retuns false.
     if (!m_scene_created){
-#ifndef NDEBUG
-        std::cout << "Scene doesn't exist, from which to delete the mesh";
-#endif
         return false;
     }
 

@@ -246,18 +246,12 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 // void BICUBIC_INTERP::getValues(BI_DATA *context){
 void BICUBIC_INTERP::getValues(BI_DATA *context){
     // Function for obtaining values inside the X, Y domain.
-#ifndef NDEBUG
-    printf("GetValues %f %f\n", context->r, context->z);
-#endif
     double x,y;
 
     /// Output
     context->val = 0;
     context->valdx = 0;
     context->valdy = 0;
-#ifndef NDEBUG
-    printf("Clipping\n");
-#endif
     x = __clip(context->r, context->minx, context->maxx);
     y = __clip(context->z, context->miny, context->maxy);
 
@@ -391,18 +385,12 @@ void BICUBIC_INTERP::getValues(BI_DATA *context){
 // void BICUBIC_INTERP::getValues(BI_DATA *context){
 void BICUBIC_INTERP::getSecondDerivativeValues(BI_DATA *context){
     // Function for obtaining values inside the X, Y domain.
-#ifndef NDEBUG
-    printf("GetValues %f %f\n", context->r, context->z);
-#endif
     double x,y;
 
     /// Output
     context->val = 0;
     context->valdx = 0;
     context->valdy = 0;
-#ifndef NDEBUG
-    printf("Clipping\n");
-#endif
     x = __clip(context->r, context->minx, context->maxx);
     y = __clip(context->z, context->miny, context->maxy);
 
