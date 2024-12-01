@@ -1,8 +1,15 @@
 #ifndef ACCELL_EMBREE_H
 #define ACCELL_EMBREE_H
 
+// Make an #error only here, since the rest of the code requires this header
+// anyway.
+#if EMBREE_VERSION == 3
 #include <embree3/rtcore.h>
-#include <vector>
+#elif EMBREE_VERSION ==4
+#include <embree4/rtcore.h>
+#else
+#error "EMBREE_VERSION not defined (properly) ! Should be either 3 or 4"
+#endif
 
 /// Class for loading shadowing geometries to Embree, to be used for RayCasting
 /// when testing if a FL intersects the shadowing geometry. In essence the
@@ -37,7 +44,9 @@ private:
     /// applications and do not want to have direct calls to Embree. Basically
     /// variables for wrapping Embree calls.
     RTCRayHit m_rayHit;
+#if EMBREE_VERSION == 3
     RTCIntersectContext m_rayContext;
+#endif
 
 public:
     EmbreeAccell(bool initDevice=true);
@@ -75,13 +84,20 @@ public:
     /// @param[in] geom_id Id of the geometry that we wish to remove.
     bool deleteMesh(unsigned int geom_id);
 
+#if EMBREE_VERSION == 3
     /// OpenMP friendly castRay function as the ray tracing structs are
     /// provided by the calling function
     ///
     /// @param[in, out] rayHit, contains the information of the ray and the hit
     /// @param[in] rayContext, contains other information relevant to ray tracing
     void castRay(RTCRayHit *rayHit, RTCIntersectContext *rayContext);
-
+#elif EMBREE_VERSION == 4
+    /// OpenMP friendly castRay function as the ray tracing structs are
+    /// provided by the calling function
+    ///
+    /// @param[in, out] rayHit, contains the information of the ray and the hit
+    void castRay(RTCRayHit *rayHit);
+#endif
 
     /// Function for performing ray tracing. After calling this function you
     /// call checkIfHit to get confirmation if hit happened.

@@ -250,8 +250,10 @@ void FLT::runFLT(){
 
         // Embree constructs
         RTCRayHit rayHit = RTCRayHit();
+#if EMBREE_VERSION == 3
         RTCIntersectContext rayContext = RTCIntersectContext();
         rtcInitIntersectContext(&rayContext);
+#endif
         // Ray tracing variables that are put into the RTCRayHit struct.
         double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
         // y[2] and yp[2] correspond to (R, Z) and value of the derivative of the
@@ -436,11 +438,15 @@ void FLT::runFLT(){
                 rayHit.ray.dir_z = dz;
                 rayHit.ray.tnear = 0.0; // Segment going from origin point
                 rayHit.ray.tfar = norm; // and is of length norm in (dx, dy,
-                rayHit.ray.mask = 0;    // dz) direction
+                rayHit.ray.mask = -1;   // dz) direction
                 rayHit.ray.flags = 0;
                 rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
                 rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+#if EMBREE_VERSION == 3
                 m_embree_obj->castRay(&rayHit, &rayContext);
+#elif EMBREE_VERSION == 4
+                m_embree_obj->castRay(&rayHit);
+#endif
                 if (rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
                     intersect=true;
                 }
@@ -603,8 +609,10 @@ void FLT::getFL(const double r, const double z, const double phi,
 
     // Embree constructs
     RTCRayHit rayHit = RTCRayHit();
+#if EMBREE_VERSION == 3
     RTCIntersectContext rayContext = RTCIntersectContext();
     rtcInitIntersectContext(&rayContext);
+#endif
 
     // Ray tracing variables that are put into the RTCRayHit struct.
     double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
@@ -793,12 +801,16 @@ void FLT::getFL(const double r, const double z, const double phi,
         rayHit.ray.dir_z = dz;
         rayHit.ray.tnear = 0.0;
         rayHit.ray.tfar = norm;
-        rayHit.ray.mask = 0;
+        rayHit.ray.mask = -1;
         rayHit.ray.flags = 0;
         rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
         rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
+#if EMBREE_VERSION == 3
         m_embree_obj->castRay(&rayHit, &rayContext);
+#elif EMBREE_VERSION == 4
+        m_embree_obj->castRay(&rayHit);
+#endif
         if (rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
             intersect=true;
         }

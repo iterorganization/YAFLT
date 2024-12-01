@@ -19,7 +19,10 @@ endif()
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # 3rd party dependencies
-find_package(embree 3 REQUIRED)
+find_package(embree REQUIRED)
+# Set Embree MAJOR version
+add_definitions("-DEMBREE_VERSION=${EMBREE_VERSION_MAJOR}")
+
 find_package(Doxygen)
 find_package(OpenMP)
 

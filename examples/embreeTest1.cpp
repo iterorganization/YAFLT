@@ -27,12 +27,13 @@ int main(){
     double tfar = std::numeric_limits<float>::infinity();
     bool intersect;
 
-    obj2->commitMesh(vertices, vertices_size, indices, triangles_size);
 
 
     RTCRayHit rayHit = RTCRayHit();
+#if EMBREE_VERSION == 3
     RTCIntersectContext rayContext = RTCIntersectContext();
     rtcInitIntersectContext(&rayContext);
+#endif
 
     rayHit.ray.org_x = 0;
     rayHit.ray.org_y = 0;
@@ -42,11 +43,15 @@ int main(){
     rayHit.ray.dir_z = 1;
     rayHit.ray.tnear = tnear;
     rayHit.ray.tfar = tfar;
-    rayHit.ray.mask = 0;
+    rayHit.ray.mask = -1;
     rayHit.ray.flags = 0;
     rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
     rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+#if EMBREE_VERSION == 3
     obj2->castRay(&rayHit, &rayContext);
+#elif EMBREE_VERSION == 4
+    obj2->castRay(&rayHit);
+#endif
 
     intersect = rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
     if (intersect == true)
@@ -69,18 +74,20 @@ int main(){
     rayHit.ray.dir_z = 1;
     rayHit.ray.tnear = tnear;
     rayHit.ray.tfar = tfar;
-    rayHit.ray.mask = 0;
+    rayHit.ray.mask = -1;
     rayHit.ray.flags = 0;
     rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
     rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 
     intersect = rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID;
+    // First one should be HIT!
     if (intersect == true)
         std::cout << "intersect: " << intersect << std::endl;
     else
         std::cout << "intersect: 0" << std::endl;
 
     // Now try it the other way
+    // Second one NOT!
     obj2->castRay(1, 1, -1, 0, 0, 1, tnear, tfar);
     if (obj2->checkIfHit())
         std::cout << "intersect: " << intersect << std::endl;

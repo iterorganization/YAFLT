@@ -17,8 +17,11 @@ EmbreeAccell::EmbreeAccell(bool initialize){
     /// The following variables are used when we want to run in serial embree
     /// functions and also used via Python for other purposes.
     m_rayHit = RTCRayHit();
+#if EMBREE_VERSION == 3
     m_rayContext = RTCIntersectContext();
     rtcInitIntersectContext(&m_rayContext);
+#endif
+
 }
 
 EmbreeAccell::~EmbreeAccell(){
@@ -160,9 +163,15 @@ bool EmbreeAccell::deleteMesh(unsigned int geom_id){
     return true;
 }
 
+#if EMBREE_VERSION == 3
 void EmbreeAccell::castRay(RTCRayHit *ray, RTCIntersectContext *context){
     rtcIntersect1(m_scene, context, ray);
 }
+#elif EMBREE_VERSION == 4
+void EmbreeAccell::castRay(RTCRayHit *ray){
+    rtcIntersect1(m_scene, ray);
+}
+#endif
 
 // Functions for Cython (so no Embree is needed to be included)
 
@@ -176,11 +185,15 @@ void EmbreeAccell::castRay(float ox, float oy, float oz, float dx, float dy, flo
     m_rayHit.ray.dir_z = dz;
     m_rayHit.ray.tnear = tnear;
     m_rayHit.ray.tfar = tfar;
-    m_rayHit.ray.mask = 0;
+    m_rayHit.ray.mask = -1;
     m_rayHit.ray.flags = 0;
     m_rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
     m_rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+#if EMBREE_VERSION == 3
     rtcIntersect1(m_scene, &m_rayContext, &m_rayHit);
+#elif EMBREE_VERSION == 4
+    rtcIntersect1(m_scene, &m_rayHit);
+#endif
 }
 
 bool EmbreeAccell::checkIfHit(){
