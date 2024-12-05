@@ -27,7 +27,7 @@ int main(){
     double tfar = std::numeric_limits<float>::infinity();
     bool intersect;
 
-
+    obj2->commitMesh(vertices, vertices_size, indices, triangles_size);
 
     RTCRayHit rayHit = RTCRayHit();
 #if EMBREE_VERSION == 3
