@@ -192,7 +192,7 @@ int main(){
     obj->runFLT();
 
     double fieldline_length=0.0;
-    for(int i = 0; i < obj->m_out_fieldline_lengths.size(); i++){
+    for(int i = 0; i < nTriangle; i++){
         fieldline_length = obj->m_out_fieldline_lengths[i];
         printf("%d length=%f geom=%d prim=%d\n", i, fieldline_length, obj->m_out_geom_hit_ids[i], obj->m_out_prim_hit_ids[i]);
         conlen[i] = fieldline_length;

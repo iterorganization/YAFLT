@@ -1,12 +1,12 @@
 #include <accell_embree.hpp>
 
-
+// UNUSED
 // We will register this error handler with the device in createDevice(),
 // so that we are automatically informed on errors.
 // This is extremely helpful for finding bugs in your code, prevents you
 // from having to add explicit error checking to each Embree API call.
-void error_handler(void *userPtr, const RTCError code, const char *str){
-}
+// void error_handler(void *userPtr, const RTCError code, const char *str){
+// }
 
 EmbreeAccell::EmbreeAccell(bool initialize){
     if (initialize) {
@@ -41,7 +41,7 @@ void EmbreeAccell::createDevice(){
     }
 
     // Register the error function.
-    rtcSetDeviceErrorFunction(device, error_handler, NULL);
+    // rtcSetDeviceErrorFunction(device, error_handler, NULL);
     m_device = device;
     m_device_created = true;
 }

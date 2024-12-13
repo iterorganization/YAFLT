@@ -170,7 +170,7 @@ public:
     /// @param[in] r is the array, which contains NDIMR number of radial points
     void setRARR(std::vector<double> r);
     /// Sets the vertical points array of size NDIMZ
-    /// @param[in] r is the array, which contains NDIMZ number of vertical
+    /// @param[in] z is the array, which contains NDIMZ number of vertical
     ///              points
     void setZARR(std::vector<double> z);
     /// Sets the psi values array of size NDIMR*NDIMZ.
@@ -213,10 +213,11 @@ public:
     }
 
     /// Sets the maximum fieldline length in meters to follow a FL.
-    /// @param[in] max_conlen is the maximum connection length to which we
-    ///                       follow a FL, if the termination is determined by
-    ///                       its length. Otherwise ignored if following till a
-    ///                       specified toroidal angle.
+    /// @param[in] max_fieldline_length is the maximum connection length to 
+    ///                                 which we follow a FL, if the 
+    ///                                 termination is determined by its 
+    ///                                 length. Otherwise ignored if following 
+    ///                                 till aspecified toroidal angle.
     void setMaximumFieldlineLength(double max_fieldline_length){
         m_max_fieldline_length = max_fieldline_length;
     };
@@ -291,6 +292,7 @@ public:
     ///            the toroidal direction of the magnetic field)
     /// @param[in, out] storage vector for storing points (continuously, as in
     ///                         (r1, z1, phi1, r2, z2, phi2, ...))
+    /// @param[in] with_flt Enable intersection with the shadowing geometry.
     void getFL(const double r, const double z, const double phi,
                 const int direction, std::vector<double>& storage,
                 const bool with_flt);
@@ -300,64 +302,57 @@ public:
     /// based on FORMULA 2 Table III in Fehlberg NASA Technical Report 287.
     /// @param[in] y Is the initial [X, Y] (or [R, Z] in Cylindrical
     ///                 coordinate system) point.
-    /// @param[in] t is the current parametric time or in the actual sense the
-    ///              current toroidal angle
     /// @param[in] h is the current parametric time step or in the actual sense
     ///              the current toroidal angle step
-    /// @param[in] yp is the derivative value in [R, Z] direction at y point
-    /// @param[in] k2 is the slope factor.
-    /// @param[in] k3 is the slope factor.
-    /// @param[in] k4 is the slope factor.
-    /// @param[in] k5 is the slope factor.
-    /// @param[in] k6 is the slope factor.
+    /// @param[in, out] yp is the derivative value in [R, Z] direction at y point
+    /// @param[in, out] k2 is the slope factor.
+    /// @param[in, out] k3 is the slope factor.
+    /// @param[in, out] k4 is the slope factor.
+    /// @param[in, out] k5 is the slope factor.
+    /// @param[in, out] k6 is the slope factor.
+    /// @param[in, out] s is the solution.
     /// @param[in, out] context is the struct necessary for running
     ///                 interpolation functions
-    void fehl_step(double y[2], double t, double h, double yp[2], double k2[2],
+    void fehl_step(double y[2], double h, double yp[2], double k2[2],
                    double k3[2], double k4[2], double k5[2], double k6[2],
                    double s[2], BI_DATA *context);
 
     /// Function that calculates the partial derivatives of the axis-symmetric
     /// non-time dependent PDE's for fieldlines in a Cylindrical coordinate
     /// system.
-    /// @param[in] y[2] is the (R, Z) position where we want to calculate the
+    /// @param[in] y is the (R, Z) position where we want to calculate the
     ///            partial derivative values.
-    /// @param[in, out] yp[2] holds the values of the partial derivatives at
+    /// @param[in, out] yp holds the values of the partial derivatives at
     ///                 points (R, Z)
     /// @param[in, out] context is the struct necessary for running
     ///                 interpolation functions
     void flt_pde(double y[2], double yp[2], BI_DATA *context);
 
-    /// For a given point in the (R, Z, Phi) space in units of (m, m, rad)
+    /// For a given point in the (R, Z) space in units of (m, m)
     /// return the poloidal and toroidal component of the magnetic field.
-    /// @param[in] r is the radial position of a point
-    /// @param[in] z is the vertical position of a point
-    /// @param[in] phi is the toroidal position of a point
+    /// @param[in] r is the radial position of a point. In meters.
+    /// @param[in] z is the vertical position of a point. In meters.
     /// @param[in, out] out holds the value of the poloidal and toroidal
     ///                     component of the magnetic field
     void getBCyln(double r, double z, std::vector<double> &out);
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad) return
     /// the magnetic field vector in Cartesian coordinate system. The values
     /// are written in the out variable.
-    /// @param[in] r is the radial position of a point
-    /// @param[in] z is the vertical position of a point
+    /// @param[in] r is the radial position of a point. In meters.
+    /// @param[in] z is the vertical position of a point. In meters.
+    /// @param[in] phi is the toroidal position of the point. In radians.
     /// @param[in, out] out holds the value of the magnetic field vector in the
     ///                     Cartesian coordinate system.
     void getBCart(double r, double z, double phi, std::vector<double> &out);
     /// For a given point in the (R, Z) space in units of (m, m) return the
     /// poloidal current function in units of m T (Bt R).
     /// @returns fpol which is the value of the poloidal current function
-    /// @param[in] r is the radial position
-    /// @param[in] z is the vertical position
+    /// @param[in] r is the radial position. In meters.
+    /// @param[in] z is the vertical position. In meters.
     double getFPol(double r, double z);
-    /// For a given point in the flux space in units of (Webb/rad) return the
-    /// poloidal current function in units of m T (Bt R).
-    /// @returns fpol which is the value of the poloidal current function
-    /// @param[in] flux is the poloidal magnetic flux value, or the magnetic
-    ///                 surface at which we are interested to obtain the fpol.
-    double getFPol(double flux);
     /// Get's the Poloidal current function in vacuum
-    /// @returns m_vacuum_fpol is the value of the poloidal current function
-    ///                        in the vacuum. It is constant for whole vacuum.
+    /// @returns  the value of the poloidal current function in the vacuum. 
+    ///           It is constant for whole vacuum.
     double getVacuumFPOL(){return m_vacuum_fpol;};
     /// For a given point in the (R, Z) space in units of (m, m) return the
     /// poloidal flux value in Webb/rad

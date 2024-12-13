@@ -72,9 +72,9 @@ public:
     /// @param[in] triangles 1D array containing all triangles (t1.p1, t1.p2,
     ///                      t1.p3, t2.p1, ...).
     /// @param[in] n_triangles Number of triangles (len(triangles)/3).
-    /// @param[out] geomId The id of the loaded geometry. This is used to
-    ///                    on order to understand which mesh or geometry is
-    ///                    intersected, when intersection occur.
+    /// @return The id of the loaded geometry. This is used to on order to 
+    ///         understand which mesh or geometry is intersected, when 
+    ///         intersection occur.
     unsigned int commitMesh(float* vertices, long int n_vertices,
                             unsigned* triangles, long int n_triangles);
 

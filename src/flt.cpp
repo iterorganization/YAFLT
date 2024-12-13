@@ -328,7 +328,7 @@ void FLT::runFLT(){
                     // Advance an approximate solution over one step of length
                     // h. If there is no need to lower the step size then the
                     // solution in variable s is accepted.
-                    fehl_step(y, t, h, yp, k2, k3, k4, k5, k6, s, interp_context);
+                    fehl_step(y, h, yp, k2, k3, k4, k5, k6, s, interp_context);
                     // Compute and test allowable tolerances versus local error
                     // estimates and remove scaling of tolerances. The relative
                     // error is measured with respect to the average of the
@@ -486,7 +486,7 @@ void FLT::runFLT(){
     } // END OF PRAGMA OMP
 }
 
-void FLT::fehl_step(double y[2], double t, double h, double yp[2],
+void FLT::fehl_step(double y[2], double h, double yp[2],
                     double k2[2], double k3[2], double k4[2], double k5[2],
                     double k6[2], double s[2], BI_DATA *interp_context){
 
@@ -687,7 +687,7 @@ void FLT::getFL(const double r, const double z, const double phi,
             // Advance an approximate solution over one step of length h
             // If there is no need to lower the step size then the solution
             // in variable s is accepted.
-            fehl_step(y, t, h, yp, k2, k3, k4, k5, k6, s, interp_context);
+            fehl_step(y, h, yp, k2, k3, k4, k5, k6, s, interp_context);
             // Compute and test allowable tolerances versus local error
             // estimates and remove scaling of tolerances. The relative
             // error is measured with respect to the average of the

@@ -1,6 +1,0 @@
-Description on source files:
-
-  accell_embree.* - handles Embree API
-  flt.* - the kernel, takes the equilibrium data and contains functions for FLT
-  rkf45.* is the RKF45 method. Not imported in flt.* but used for testing.
-

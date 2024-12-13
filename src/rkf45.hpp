@@ -34,14 +34,14 @@ public:
     void set_interpolator(BICUBIC_INTERP *interp){m_interp_psi = interp;m_interpolator_set=true;};
     BICUBIC_INTERP* get_interpolator(){return m_interp_psi;};
     void set_omp_thread(int omp_thread){m_omp_thread=omp_thread;};
-    void r8_flt(double t, double y[2], double yp[2]);
+    void r8_flt(double y[2], double yp[2]);
     double r8_abs(double x);
     double r8_epsilon();
     double r8_max(double x, double y);
     double r8_min(double x, double y);
-    void r8_fehl(double y[2], double t, double h, double yp[2],
-                 double f1[2], double f2[2], double f3[2], double f4[2],
-                 double f5[2], double s[2]);
+    void r8_fehl(double y[2], double h, double yp[2], double f1[2], 
+                 double f2[2], double f3[2], double f4[2], double f5[2], 
+                 double s[2]);
     int r8_rkf45(double y[2], double yp[2], double *t, double tout,
                  double *relerr, double abserr, int flag);
     double r8_sign(double x);
