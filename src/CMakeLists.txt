@@ -24,14 +24,16 @@ set(FLT_HEADERS
     )
 
 # Create the static library and shared library
-add_library(flt_static STATIC ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
-add_library(flt SHARED ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
+add_library(flt_static STATIC 
+    ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
+add_library(flt SHARED 
+    ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
 
 # Link embree and add include directories for dependencies.
 foreach(target flt_static flt)
     target_link_libraries(${target} PUBLIC ${EMBREE_LIBRARY})
     target_include_directories(${target} PUBLIC ${EMBREE_INCLUDE_DIRS})
-    target_include_directories(${target} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+    target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(${target} PUBLIC OpenMP::OpenMP_CXX)
 endforeach(target)
 
@@ -45,5 +47,14 @@ set_target_properties(flt_static PROPERTIES PUBLIC_HEADER "${FLT_HEADERS}")
 
 # Mark libraries for installation. In case of flt we also install the public
 # headers.
-install(TARGETS flt LIBRARY DESTINATION lib PUBLIC_HEADER DESTINATION include/flt RUNTIME DESTINATION bin)
-install(TARGETS flt_static DESTINATION lib PUBLIC_HEADER DESTINATION include/flt)
+install(TARGETS flt 
+    EXPORT FLTTargets
+    RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+    LIBRARY DESTINATION "${INSTALL_LIB_DIR}" 
+    PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}")
+
+install(TARGETS flt_static
+    EXPORT FLTTargets     
+    RUNTIME DESTINATION "${INSTALL_BIN_DIR}"
+    LIBRARY DESTINATION "${INSTALL_LIB_DIR}" 
+    PUBLIC_HEADER DESTINATION "${INSTALL_INCLUDE_DIR}")
