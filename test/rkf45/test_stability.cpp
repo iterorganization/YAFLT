@@ -64,6 +64,7 @@ int main(){
 
     // Desired accuracy.
     double relerr=1e-4, abserr=1e-4;
+    double desired_relerr=1e-4;
     y[0] = 6.4;
     y[1] = 0.0;
 
@@ -80,10 +81,12 @@ int main(){
     unsigned int ten_percentile = N/10;
     double percentage;
 
+    bool ok = true;
+
     while (counter < N){
         if (counter % ten_percentile == 0){
             percentage = 10*static_cast<double>(counter / ten_percentile);
-            printf("%.2f %\n", percentage);
+            printf("%.2f\n", percentage);
         }
         new_time = time + time_step;
         flag = solver->r8_rkf45(y, yp, &time, new_time, &relerr, abserr, flag);
@@ -92,8 +95,10 @@ int main(){
         context->z = y[1];
         naive_interp->getValues(context);
         rel_error = std::fabs(std::fabs(context->val - flux) / flux);
-        if (rel_error > 1e-4){
+        if (rel_error > desired_relerr){
             printf("%f %f %f %e\n", time / (2 * 3.14), y[0], y[1], rel_error);
+            ok = false;
+            break;
         }
         // Set the flag back to 2 and ignore other messages from the solver.
         flag = 2;
@@ -102,6 +107,8 @@ int main(){
 
     // Free objects
     delete solver; // Also deletes the interpolation object tied to it.
-
+    if (!ok){
+        return 1;
+    }
     return 0;
 }

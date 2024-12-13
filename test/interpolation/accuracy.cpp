@@ -1,6 +1,6 @@
 /// Testing the accuracy of the naive definition of the code. Selected a
-/// function from which we can easily calculate the value of the function
-///
+/// function from which we can easily calculate the value of the function and
+/// it's derivative
 
 #include <bicubic.hpp>
 
@@ -30,8 +30,6 @@ int main(){
     alpha=2.5;
     beta=2.5;
 
-    double x,y;
-
     std::vector<double> X, Y;
     X.resize(Nx);
     Y.resize(Ny);
@@ -53,14 +51,9 @@ int main(){
         }
         F.push_back(buffer);
     }
-    printf("what %d %d %d %d\n", X.size(), Y.size(), F.size(), F[0].size());
 
     obj->setArrays(X, Y, F);
-    printf("what\n");
-
     obj->populateContext(context);
-    printf("what\n");
-
 
     // For Random prepare lower and upper boundaries
     double xmin, xmax, xdiff, ymin, ymax, ydiff;
@@ -72,16 +65,13 @@ int main(){
     ydiff = ymax - ymin;
 
     //Random check
-    double buff_x, buff_y, buff_f, buff, f;
+    double buff_x, buff_y, buff;
     double exact_f, exact_fdx, exact_fdy;
     int N = 10*1000*1000;
-    printf("Comparing %d values\n", N);
+
     bool print;
     double abs_max_f=-1, abs_max_fdx=-1, abs_max_fdy=-1;
-    double abs_max_r=0.0;
-    double abs_max_z=0.0;
     int counts=0;
-
 
     for (int i=0; i<N; i++){
         //
@@ -128,22 +118,26 @@ int main(){
         }
         if (print) {
             counts = counts + 1;
-            printf("Point %f %f\n", buff_x, buff_y);
-            printf("Type:\tVal\tValdx\tValdy\n");
-            printf("Naive\t%f\t%f\t%f\n", context->val, context->valdx, context->valdy);
-            printf("Exact\t%f\t%f\t%f\n", exact_f, exact_fdx, exact_fdy);
-            printf("Error\t%f\t%f\t%f\n", abs_max_f, abs_max_fdx, abs_max_fdy);
+            // printf("Point %f %f\n", buff_x, buff_y);
+            // printf("Type:\tVal\tValdx\tValdy\n");
+            // printf("Naive\t%f\t%f\t%f\n", context->val, context->valdx, context->valdy);
+            // printf("Exact\t%f\t%f\t%f\n", exact_f, exact_fdx, exact_fdy);
+            // printf("Error\t%f\t%f\t%f\n", abs_max_f, abs_max_fdx, abs_max_fdy);
         }
     }
-    printf("Total tries: %d\n", N);
     double ratio=(double)counts/N;
-    printf("Number of high error points: %d (%.2f %)\n", counts, ratio*100);
-    printf("Maximum relative error f: %f\n", abs_max_f);
-    printf("Maximum relative error fdx: %f\n", abs_max_fdx);
-    printf("Maximum relative error fdy: %f\n", abs_max_fdy);
-    printf("Location %f %f\n", abs_max_r, abs_max_z);
-    printf("R goes from %f to %f\n", xmin, xmax);
-    printf("Z goes from %f to %f\n", ymin, ymax);
-    return 0;
+    // printf("Total tries: %d\n", N);
+    // printf("Number of high error points: %d (%.2f)\n", counts, ratio*100);
+    // printf("Maximum relative error f: %f\n", abs_max_f);
+    // printf("Maximum relative error fdx: %f\n", abs_max_fdx);
+    // printf("Maximum relative error fdy: %f\n", abs_max_fdy);
+    // printf("Location %f %f\n", abs_max_r, abs_max_z);
+    // printf("R goes from %f to %f\n", xmin, xmax);
+    // printf("Z goes from %f to %f\n", ymin, ymax);
 
+    if (ratio > 0.05){
+        // If the error ratio is more than 5% return 1
+        return 1;
+    }
+    return 0;
 }

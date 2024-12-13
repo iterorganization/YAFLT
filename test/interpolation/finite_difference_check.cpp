@@ -201,6 +201,7 @@ int main(){
     }
     if (!ok){
         printf("Psi values differ!\n");
+        return 1;
     }
     else{
         printf("Psi values are the same!\n");
@@ -218,6 +219,7 @@ int main(){
     }
     if (!ok){
         printf("Psidx values differ!\n");
+        return 1;
     }
    else{
         printf("Psidx values are the same!\n");
@@ -236,6 +238,7 @@ int main(){
 
     if (!ok){
         printf("Psidy values differ!\n");
+        return 1;
     }
     else{
         printf("Psidy values are the same!\n");
@@ -253,6 +256,7 @@ int main(){
     }
     if (!ok){
         printf("Psidxdy values differ!\n");
+        return 1;
     }
     else{
         printf("Psidxdy values are the same!\n");
@@ -264,5 +268,5 @@ int main(){
     delete [] arr_fdx;
     delete [] arr_fdy;
     delete [] arr_fdxdy;
-
+    return 0;
 }

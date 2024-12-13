@@ -23,6 +23,5 @@ int main(){
         delete flt_obj;
         delete bicubic_obj;
     }
-    printf("If you see this, then it's okay\n");
     return 0;
 }

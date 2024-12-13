@@ -46,9 +46,6 @@ int main(){
     zmax = eq3_Zs[eq3_Zs.size() - 2];
     zdiff = zmax - zmin;
 
-    // Output variables
-    double fval, fvaldx, fvaldy, fvaldxdy;
-
     // for (int i=0; i<10;i++){
     //     random_number(rmin, rmax, buff_x);
     //     random_number(zmin, zmax, buff_y);
@@ -80,13 +77,10 @@ int main(){
         context->z = buff_z[i];
 
         naive_interp->getValues(context);
-        fval = context->val;
-        fvaldx = context->valdx;
-        fvaldy = context->valdy;
     }
     end = std::chrono::high_resolution_clock::now();
     elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
     printf("Naive interpolation time for %d iterations: %f\n", N, elapsed.count() * 1e-9);
-    printf("Or number of evaluations per second: %.2f\ M/s \n", N * 1e3 / (elapsed.count()));
+    printf("Or number of evaluations per second: %.2f M/s \n", N * 1e3 / (elapsed.count()));
     return 0;
 }

@@ -54,7 +54,7 @@ int main(){
     //     random_number(zmin, zmax, buff_y);
     //     printf("%f %f\n", buff_x, buff_y);
     // }
-    int N = 1000*1000*1000;
+    int N = 100*1000*1000;
 
     std::vector<double> buff_r;
     std::vector<double> buff_z;
@@ -121,4 +121,11 @@ int main(){
     elapsed = end-begin;
     printf("Parallel interpolation time for %d iterations with %d threads: %f\n", N, THREAD_NUM, elapsed);
     printf("Speedup: %.2f\n", serial_elapsed / elapsed);
+
+    if (serial_elapsed / elapsed < 1.0){
+        // Speedup is less than 1. Something is wrong
+        return 1;
+    }
+
+    return 0;
 }
