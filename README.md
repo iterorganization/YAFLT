@@ -91,3 +91,21 @@ source directory.
 
 ## Usage of the code in other CMake projects
 
+The software can be imported in other CMake projects. The CMake directory has
+to be appened to the CMAKE_PREFIX_PATH:
+
+```bash
+export CMAKE_PREFIX_PATH=/path/to/install/lib/cmake/flt:${CMAKE_PREFIX_PATH}
+```
+
+and then can be used in CMake as following:
+
+```cmake
+find_package(FLT REQUIRED)
+find_package(OpenMP)
+
+add_executable(<TARGET> <TARGET_CONFIGURATION>)
+target_link_libraries(<TARGET> flt)
+target_include_directories(<TARGET> PUBLIC ${FLT_INCLUDE_DIRS})
+target_compile_definitions(<TARGET> PUBLIC ${FLT_COMPILE_DEFINITIONS})
+```
