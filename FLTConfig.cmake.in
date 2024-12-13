@@ -1,0 +1,12 @@
+# Compute paths
+get_filename_component(FLT_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+set(FLT_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+# Our library dependencies (contains definitions for IMPORTED targets)
+if(NOT TARGET flt AND NOT FLT_BINARY_DIR)
+  include("${FLT_CMAKE_DIR}/FLTTargets.cmake")
+endif()
+
+# These are IMPORTED targets created by FLTTargets.cmake
+set(FLT_LIBRARIES flt)
+set(FLT_COMPILE_DEFINITIONS "@FLT_COMPILE_DEFINITIONS@")
