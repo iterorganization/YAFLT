@@ -59,8 +59,9 @@ int main(){
     // Containers for the position and derivative
     double y[2], yp[2];
     double time=0, new_time=0, time_step=.01;
-    // Flag=2 sets the solver in a single step-mode.
-    int flag=2;
+    // Flag=1, 2 sets the solver in a single step-mode. Use 1 for first 
+    // initialization. Required!
+    int flag=1;
 
     // Desired accuracy.
     double relerr=1e-4, abserr=1e-4;
@@ -107,6 +108,7 @@ int main(){
 
     // Free objects
     delete solver; // Also deletes the interpolation object tied to it.
+    delete context;
     if (!ok){
         return 1;
     }
