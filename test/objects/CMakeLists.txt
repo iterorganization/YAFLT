@@ -1,2 +1,0 @@
-add_executable(create_and_delete_objects ${CMAKE_CURRENT_SOURCE_DIR}/create_and_delete_objects.cpp)
-target_link_libraries(create_and_delete_objects flt_static)
