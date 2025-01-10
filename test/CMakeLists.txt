@@ -11,6 +11,7 @@ set(OBJECT_TESTS
 
 set(RKF45_TESTS
     rkf45/test_stability.cpp
+    rkf45/test_rkf45_method.cpp
 )
 
 set(EMBREE_TESTS
