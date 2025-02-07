@@ -1,7 +1,7 @@
 #include "bicubic.hpp"
 #include <cmath>
 
-double __clip(double x, double lower, double upper){
+constexpr double __clip(double x, double lower, double upper){
     const double t = x < lower ? lower : x;
     return t > upper ? upper : t;
 }
