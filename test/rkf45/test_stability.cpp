@@ -29,6 +29,8 @@ One can plot the contents simply with
 #include <rkf45.hpp>
 #include <bicubic.hpp>
 #include <cstdio>
+#include <chrono>
+
 int main(){
 
     RKF45 *solver = new RKF45();
@@ -78,13 +80,16 @@ int main(){
     naive_interp->getValues(context);
     flux = context->val;
     unsigned int counter=0;
-    unsigned int N=1000000;
+    unsigned int N=100000000;
     unsigned int ten_percentile = N/10;
     double percentage;
 
     bool ok = true;
-
-    while (counter < N){
+    auto begin = std::chrono::high_resolution_clock::now();
+    double max_error=0.0;
+    double control_time = 0;
+    double last_error;
+    while (1){
         if (counter % ten_percentile == 0){
             percentage = 10*static_cast<double>(counter / ten_percentile);
             printf("%.2f\n", percentage);
@@ -96,6 +101,8 @@ int main(){
         context->z = y[1];
         naive_interp->getValues(context);
         rel_error = std::fabs(std::fabs(context->val - flux) / flux);
+        max_error=std::fmax(rel_error, max_error);
+        last_error = rel_error;
         if (rel_error > desired_relerr){
             printf("%f %f %f %e\n", time / (2 * 3.14), y[0], y[1], rel_error);
             ok = false;
@@ -104,8 +111,22 @@ int main(){
         // Set the flag back to 2 and ignore other messages from the solver.
         flag = 2;
         counter = counter + 1;
+        control_time = control_time + time_step;
+        if (time >= 1000000.0){
+            break;
+        }
+        // if (counter >= N){
+        //     break;
+        // }
     }
 
+    auto end = std::chrono::high_resolution_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - begin);
+    float performance = N *1e3 / elapsed.count();
+    printf("Performance of steps per second: %f M/s\n", performance);
+    printf("Max error: %e\n", max_error);
+    printf("Last error: %e\n", last_error);
+    printf("Final time: %f %f\n", time, control_time);
     // Free objects
     delete solver; // Also deletes the interpolation object tied to it.
     delete context;
