@@ -31,13 +31,13 @@ foreach(p LIB BIN INCLUDE CMAKE)
   endif()
 endforeach()
 
-
 if(MSVC)
     add_compile_options("/W4" "$<$<CONFIG:RELEASE>:/O2>")
 else()
     add_compile_options("-Wall" "-Wextra" "$<$<CONFIG:RELEASE>:-O3>")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         add_compile_options("-stdlib=libc++")
+        add_link_options("-stdlib=libc++")
     else()
         # nothing special for gcc at the moment
     endif()
@@ -116,7 +116,7 @@ configure_file(FLTConfig.cmake.in
 configure_file(FLTConfigVersion.cmake.in
   "${PROJECT_BINARY_DIR}/FLTConfigVersion.cmake" @ONLY)
 
-# Install the FooBarConfig.cmake and FooBarConfigVersion.cmake
+# Install the FltConfig.cmake and FltConfigVersion.cmake
 install(FILES
   "${PROJECT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/FLTConfig.cmake"
   "${PROJECT_BINARY_DIR}/FLTConfigVersion.cmake"
