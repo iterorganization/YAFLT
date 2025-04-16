@@ -20,7 +20,7 @@
 // BI_DATA struct is used for providing context when obtaining interpolation
 // values. Also more OpenMP friendly than plain shared class attributes.
 
-struct BICUBIC_API alignas(64) BI_DATA
+struct BICUBIC_API BI_DATA
 {
     double r=0;
     double z=0;
