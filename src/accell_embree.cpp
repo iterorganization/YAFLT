@@ -141,7 +141,8 @@ unsigned int EmbreeAccell::commitMesh(float* vertices, long int n_vertices,
     // Like geometry objects, scenes must be committed. This lets
     // Embree know that it may start building an acceleration structure.
     rtcCommitScene(m_scene);
-    m_isEmpty = false;
+    m_number_of_commited_meshes = m_number_of_commited_meshes + 1;
+    m_is_empty = false;
     return geom_id;
 }
 
@@ -160,15 +161,19 @@ bool EmbreeAccell::deleteMesh(unsigned int geom_id){
     }
 
     rtcCommitScene(m_scene);
+    m_number_of_commited_meshes = m_number_of_commited_meshes - 1;
+    if (m_number_of_commited_meshes == 0) m_is_empty = true;
     return true;
 }
 
 #if EMBREE_VERSION == 3
 void EmbreeAccell::castRay(RTCRayHit *ray, RTCIntersectContext *context){
+    if (m_is_empty) return;
     rtcIntersect1(m_scene, context, ray);
 }
 #elif EMBREE_VERSION == 4
 void EmbreeAccell::castRay(RTCRayHit *ray){
+    if (m_is_empty) return;
     rtcIntersect1(m_scene, ray);
 }
 #endif
@@ -177,6 +182,7 @@ void EmbreeAccell::castRay(RTCRayHit *ray){
 
 void EmbreeAccell::castRay(float ox, float oy, float oz, float dx, float dy, float dz,
                            double tnear, double tfar){
+    if (m_is_empty) return;
     m_rayHit.ray.org_x = ox;
     m_rayHit.ray.org_y = oy;
     m_rayHit.ray.org_z = oz;

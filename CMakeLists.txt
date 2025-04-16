@@ -11,8 +11,8 @@ option(FLT_BUILD_TESTS "Build tests" ON)
 
 # Offer the user the choice of overriding the installation directories
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
-set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executables")
-set(INSTALL_DOC_DIR share/doc CACHE PATH "Installation directory for documentatoin")
+set(INSTALL_BIN_DIR bin CACHE PATH "Installation directory for executable")
+set(INSTALL_DOC_DIR share/doc CACHE PATH "Installation directory for documentation")
 set(INSTALL_INCLUDE_DIR include CACHE PATH
   "Installation directory for header files")
 if(WIN32 AND NOT CYGWIN)

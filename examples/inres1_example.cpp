@@ -86,23 +86,9 @@ int main(){
 
     // Load the EQDSK data
 
-    // Necessary to input the number of points of R, Z grid.
-    int Nr = Rs.size();
-    int Nz = Zs.size();
-
     // Set input data
-    obj->setNDIM(Nr, Nz);
-
-    obj->setRARR(Rs);
-    obj->setZARR(Zs);
-    obj->setPSI(PSIs);
-    obj->setFARR(SIMAG_BDRYs);
-    obj->setFPOL(FPOLs);
+    obj->setPoloidalMagneticFlux(Rs, Zs, PSIs);
     obj->setVacuumFPOL(FPOLs[FPOLs.size() - 1]);
-
-    // Prepare interpolation objects
-    obj->prepareInterpolation();
-
 
     // Set ODE parameters
     obj->setAbsError(1e-4);

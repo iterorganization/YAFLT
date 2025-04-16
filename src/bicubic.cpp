@@ -1,7 +1,8 @@
 #include "bicubic.hpp"
 #include <cmath>
+#include <stdexcept>
 
-constexpr double __clip(double x, double lower, double upper){
+constexpr double __clip(double x, double lower, double upper) noexcept {
     const double t = x < lower ? lower : x;
     return t > upper ? upper : t;
 }
@@ -9,6 +10,21 @@ constexpr double __clip(double x, double lower, double upper){
 
 void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
                                std::vector<std::vector<double>> f){
+
+    /*First check if the sizes match*/
+
+    int n_rows, n_cols, f_size;
+    n_rows = y.size();
+    n_cols = x.size();
+
+    f_size = 0;
+    for (const auto& el: f){
+        f_size += el.size();
+    }
+    f_size = f.size() * f[0].size();
+
+    if (n_rows * n_cols != f_size) throw std::logic_error("Array sizes do not match!");
+
     /*Copy the input data for interpolation*/
 
     /*Reset the vectors*/
@@ -26,8 +42,8 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
     m_f = f;
 
     /*Now set the mins, maxes and deltas*/
-    m_nx = m_x.size();
-    m_ny = m_y.size();
+    m_nx = n_cols;
+    m_ny = n_rows;
 
     m_minx = m_x[0];
     m_maxx = m_x[m_nx-1];
@@ -39,12 +55,7 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
     // m_dy = (m_maxy - m_miny) / m_ny;
     m_dy = m_y[1] - m_y[0];
 
-
-    int n_rows, n_cols;
-    n_rows = m_ny;
-    n_cols = m_nx;
-
-    // Now calcuate the derivatives
+    // Now calculate the derivatives
     // The following is the direction of Rows and Columns!!!
     //  o----> X (R)
     //  |
@@ -244,7 +255,7 @@ void BICUBIC_INTERP::setArrays(std::vector<double> x, std::vector<double> y,
 };
 
 // void BICUBIC_INTERP::getValues(BI_DATA *context){
-void BICUBIC_INTERP::getValues(BI_DATA *context){
+void BICUBIC_INTERP::getValues(BI_DATA *context) noexcept{
     // Function for obtaining values inside the X, Y domain.
     double x,y;
 
@@ -383,7 +394,7 @@ void BICUBIC_INTERP::getValues(BI_DATA *context){
 };
 
 // void BICUBIC_INTERP::getValues(BI_DATA *context){
-void BICUBIC_INTERP::getSecondDerivativeValues(BI_DATA *context){
+void BICUBIC_INTERP::getSecondDerivativeValues(BI_DATA *context) noexcept{
     // Function for obtaining values inside the X, Y domain.
     double x,y;
 

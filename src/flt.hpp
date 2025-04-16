@@ -1,6 +1,20 @@
 #ifndef FLT_H
 #define FLT_H
 
+#if defined(_WIN32)
+    #ifdef flt_EXPORTS
+        #define FLT_API __declspec(dllexport)
+    #else
+        #define FLT_API __declspec(dllimport)
+    #endif
+#else
+    #ifdef flt_EXPORTS
+        #define FLT_API __attribute__ ((visibility ("default")))
+    #else
+        #define FLT_API
+    #endif
+#endif
+
 // Main FLT code here. Instead of writing what is here in short text, here are
 // the things the code does not do. It does not check and/or raises exceptions
 // if the input data does not match. It is out of scope of the code. The main
@@ -9,6 +23,8 @@
 // the code is to have as less code as possible in order to focus on precision
 // and performance of the code. That does not mean it has high(est) performance
 // possible, but just that it was developed at the time as best as it could be.
+
+// Update: Exceptions are provided but not in hot code.
 
 // Bi-cubic interpolation method
 #include <bicubic.hpp>
@@ -21,15 +37,11 @@
 /// there is any intersection with the shadowing geometry. The FL equation is
 /// solved in a Cylindrical coordinate system and by using an axisymmetric
 /// plasma equilibrium input data.
-class FLT
+class FLT_API FLT
 {
 private:
 
     BICUBIC_INTERP *m_interp_psi;
-
-    /// Dimensions of the R, Z space.
-    size_t m_NDIMR=-1;
-    size_t m_NDIMZ=-1;
 
     /// Array of R points describing the radial coordinates in unit of meter.\n
     /// Together the R and Z points create the (R, Z) plane in units (m, m) if
@@ -137,6 +149,40 @@ private:
     /// is the way to check if m_embree_obj is a valid pointer
     bool m_embree_obj_loaded=false;
 
+    /// Boolean variable that tells us if magnetic data was loaded
+    bool m_equilibrium_loaded=false;
+
+    /// This is the RKF4(5) method for getting the next approximate solution to
+    /// a 2D system of PDEs (non-time-dependent). The factors are calculated
+    /// based on FORMULA 2 Table III in Fehlberg NASA Technical Report 287.
+    /// @param[in] y Is the initial [X, Y] (or [R, Z] in Cylindrical
+    ///                 coordinate system) point.
+    /// @param[in] h is the current parametric time step or in the actual sense
+    ///              the current toroidal angle step
+    /// @param[in, out] yp is the derivative value in [R, Z] direction at y point
+    /// @param[in, out] k2 is the slope factor.
+    /// @param[in, out] k3 is the slope factor.
+    /// @param[in, out] k4 is the slope factor.
+    /// @param[in, out] k5 is the slope factor.
+    /// @param[in, out] k6 is the slope factor.
+    /// @param[in, out] s is the solution.
+    /// @param[in, out] context is the struct necessary for running
+    ///                 interpolation functions
+    void fehl_step(double y[2], double h, double yp[2], double k2[2],
+                   double k3[2], double k4[2], double k5[2], double k6[2],
+                   double s[2], BI_DATA *context);
+
+    /// Function that calculates the partial derivatives of the axis-symmetric
+    /// non-time dependent PDE's for fieldlines in a Cylindrical coordinate
+    /// system.
+    /// @param[in] y is the (R, Z) position where we want to calculate the
+    ///            partial derivative values.
+    /// @param[in, out] yp holds the values of the partial derivatives at
+    ///                 points (R, Z)
+    /// @param[in, out] context is the struct necessary for running
+    ///                 interpolation functions
+    void flt_pde(double y[2], double yp[2], BI_DATA *context);
+
 public:
     FLT();
     ~FLT();
@@ -159,34 +205,16 @@ public:
     /// stores the lengths of the fieldlines.
     std::vector<double> m_out_fieldline_lengths;
 
-    /// Sets dimension of the (R,Z) grid. This has to be set before adding any
-    /// radial or vertical points, psi values or flux points and fpol values as
-    /// if raises an error if the dimensions do not match.
-    /// @param[in] NDIMR number of points in radial direction
-    /// @param[in] NDIMZ number of points in vertical direction.
-    void setNDIM(size_t NDIMR, size_t NDIMZ);
-
-    /// Sets the radial points array of size NDIMR.
-    /// @param[in] r is the array, which contains NDIMR number of radial points
-    void setRARR(std::vector<double> r);
-    /// Sets the vertical points array of size NDIMZ
-    /// @param[in] z is the array, which contains NDIMZ number of vertical
-    ///              points
-    void setZARR(std::vector<double> z);
-    /// Sets the psi values array of size NDIMR*NDIMZ.
-    /// @param[in] psi is a 1D array, long NDIMR*NDIMZ which contains values of
-    ///                the magnetic poloidal flux. Row oriented. Meaning, first
-    ///                NDIMR points is the first row, etc...
-    void setPSI(std::vector<double> psi);
-    /// Sets the flux points of size NDIMR. Size subject to change
-    /// @param[in] flux is a 1D array of flux values going from plasma center
-    ///                 to plasma boundary.
-    void setFARR(std::vector<double> flux);
-    /// Sets the value of the poloidal current function (Bt R) of size NDIMR.
-    /// Size subject to change
-    /// @param[in] fpol is a 1D array which contains NDIMR number of values of
-    ///                 the poloidal current function.
-    void setFPOL(std::vector<double> fpol);
+    /// Sets the poloidal magnetic flux array and the r, z arrays describing
+    /// the [R, Z] points. Vectors r and z must be sorted from smallest to
+    /// largest.
+    /// @param[in] r 1D vector that holds radial R points.
+    /// @param[in] z 1D vector that holds vertical Z points.
+    /// @param[in] psi flattened 2D to 1D vector that holds the flux values.
+    ///                Size of psi is [dim r x dim z] in row major
+    ///                configuration.
+    void setPoloidalMagneticFlux(std::vector<double> r, std::vector<double> z,
+                                 std::vector<double> psi);
     /// Sets the poloidal current value (Bt R) in vacuum. Units (m T)
     /// @param[in] vacuum_fpol is the F=Bt*R value in vacuum.
     void setVacuumFPOL(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
@@ -244,9 +272,6 @@ public:
     ///                  unit is meters.
     void setSelfIntersectionAvoidanceLength(double value) {m_self_intersection_avoidance_length = value;};
 
-    /// Prepares the interpolation objects.
-    bool prepareInterpolation();
-
     /// Sets the number of threads to use when running in parallel with OpenMP.
     /// The functions doesn't check the maximum value but insures the value
     /// is not below or equal 0.
@@ -272,7 +297,6 @@ public:
     /// @param[in] directions is a vector of size N containing the direction
     void setStartingFLDirection(std::vector<int> directions){m_directions=directions;};
 
-
     // ONLY WHEN THE FUNCTION SETPOINTS AND SETSTARTINGFLDIRECTION WHERE CALLED
     // MAY YOU CALL RUNFLT
 
@@ -297,43 +321,14 @@ public:
                 const int direction, std::vector<double>& storage,
                 const bool with_flt);
 
-    /// This is the RKF4(5) method for getting the next approximate solution to
-    /// a 2D system of PDEs (non-time-dependent). The factors are calculated
-    /// based on FORMULA 2 Table III in Fehlberg NASA Technical Report 287.
-    /// @param[in] y Is the initial [X, Y] (or [R, Z] in Cylindrical
-    ///                 coordinate system) point.
-    /// @param[in] h is the current parametric time step or in the actual sense
-    ///              the current toroidal angle step
-    /// @param[in, out] yp is the derivative value in [R, Z] direction at y point
-    /// @param[in, out] k2 is the slope factor.
-    /// @param[in, out] k3 is the slope factor.
-    /// @param[in, out] k4 is the slope factor.
-    /// @param[in, out] k5 is the slope factor.
-    /// @param[in, out] k6 is the slope factor.
-    /// @param[in, out] s is the solution.
-    /// @param[in, out] context is the struct necessary for running
-    ///                 interpolation functions
-    void fehl_step(double y[2], double h, double yp[2], double k2[2],
-                   double k3[2], double k4[2], double k5[2], double k6[2],
-                   double s[2], BI_DATA *context);
-
-    /// Function that calculates the partial derivatives of the axis-symmetric
-    /// non-time dependent PDE's for fieldlines in a Cylindrical coordinate
-    /// system.
-    /// @param[in] y is the (R, Z) position where we want to calculate the
-    ///            partial derivative values.
-    /// @param[in, out] yp holds the values of the partial derivatives at
-    ///                 points (R, Z)
-    /// @param[in, out] context is the struct necessary for running
-    ///                 interpolation functions
-    void flt_pde(double y[2], double yp[2], BI_DATA *context);
 
     /// For a given point in the (R, Z) space in units of (m, m)
     /// return the poloidal and toroidal component of the magnetic field.
     /// @param[in] r is the radial position of a point. In meters.
     /// @param[in] z is the vertical position of a point. In meters.
     /// @param[in, out] out holds the value of the poloidal and toroidal
-    ///                     component of the magnetic field
+    ///                     component of the magnetic field. The parameter out
+    ///                     must be a vector of size 2.
     void getBCyln(double r, double z, std::vector<double> &out);
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad) return
     /// the magnetic field vector in Cartesian coordinate system. The values
@@ -342,7 +337,8 @@ public:
     /// @param[in] z is the vertical position of a point. In meters.
     /// @param[in] phi is the toroidal position of the point. In radians.
     /// @param[in, out] out holds the value of the magnetic field vector in the
-    ///                     Cartesian coordinate system.
+    ///                     Cartesian coordinate system. Out must be a vector
+    ///                     of at least size 3.
     void getBCart(double r, double z, double phi, std::vector<double> &out);
     /// For a given point in the (R, Z) space in units of (m, m) return the
     /// poloidal current function in units of m T (Bt R).

@@ -1,6 +1,20 @@
 #ifndef ACCELL_EMBREE_H
 #define ACCELL_EMBREE_H
 
+#if defined(_WIN32)
+    #ifdef flt_EXPORTS
+        #define ACCELL_EMBREE_API __declspec(dllexport)
+    #else
+        #define ACCELL_EMBREE_API __declspec(dllimport)
+    #endif
+#else
+    #ifdef flt_EXPORTS
+        #define ACCELL_EMBREE_API __attribute__ ((visibility ("default")))
+    #else
+        #define ACCELL_EMBREE_API
+    #endif
+#endif
+
 // Make an #error only here, since the rest of the code requires this header
 // anyway.
 #if EMBREE_VERSION == 3
@@ -18,7 +32,7 @@
 /// loading/unloading of meshes (2D surface triangular meshes) and tests
 /// whether a line or ray intersects with the geometry, which loaded geometry
 /// and finally which triangle cell.
-class EmbreeAccell
+class ACCELL_EMBREE_API EmbreeAccell
 {
 private:
 
@@ -37,7 +51,8 @@ private:
     bool m_scene_created = false;
     /// Boolean that says if Embree object is empty or filled with at least one
     /// shadowing geometry.
-    bool m_isEmpty = true;
+    bool m_is_empty = true;
+    int m_number_of_commited_meshes = 0;
 
 
     /// Private variables for when we want to use Embree in Cython or other

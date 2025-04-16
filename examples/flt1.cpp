@@ -11,23 +11,9 @@
 int main(){
     FLT *obj = new FLT();
 
-    int Nr = Rs.size();
-    int Nz = Zs.size();
-
-
     // Set input data
-    obj->setNDIM(Nr, Nz);
-
-    obj->setRARR(Rs);
-    obj->setZARR(Zs);
-    obj->setPSI(PSIs);
-    obj->setFARR(SIMAG_BDRYs);
-
-    obj->setFPOL(FPOLs);
+    obj->setPoloidalMagneticFlux(Rs, Zs, PSIs);
     obj->setVacuumFPOL(FPOLs[FPOLs.size() - 1]);
-
-    // Init and run
-    obj->prepareInterpolation();
 
     // Set ODE parameters
     obj->setAbsError(1e-4);

@@ -3,9 +3,8 @@
 // STD includes
 #include <vector>
 
-#include <stdio.h>
-
 #include <omp.h>
+#include <stdexcept>
 
 FLT::FLT(){
     m_interp_psi = new BICUBIC_INTERP();
@@ -17,59 +16,22 @@ FLT::~FLT(){
     return;
 }
 
-void FLT::setNDIM(size_t NDIMR, size_t NDIMZ){
-    m_NDIMR = NDIMR; // Number of rows
-    m_NDIMZ = NDIMZ; // Number of columns
-
-    // /* Resize vectors */
-    // m_r_points.resize(NDIMR); /*R points*/
-    // m_z_points.resize(NDIMZ); /*Z points*/
-    // m_psi_values.resize(NDIMR, std::vector<double>(NDIMZ)); /*Psi values*/
-
-    // m_flux_points.resize(NDIMR); /*Psi domain from center to boundary*/
-    // m_fpol_values.resize(NDIMR); /*FPOL value*/
-}
-
-void FLT::setRARR(std::vector<double> r){
-    // Sets the radial points in meters with size NDIMR.
+void FLT::setPoloidalMagneticFlux(std::vector<double> r, std::vector<double> z, std::vector<double> psi){
     m_r_points = r;
+    m_z_points = z;
+
+    // No checks done to see if the arrays are sorted.
 
     m_r_min = r[0];
     m_r_max = r[r.size() - 1];
-}
-void FLT::setZARR(std::vector<double> z){
-    // Sets the vertical points in meters with size NDIMZ.
-    m_z_points = z;
     m_z_min = z[0];
     m_z_max = z[z.size() - 1];
-}
 
-void FLT::setPSI(std::vector<double>psi){
-    // Sets the poloidal flux values in Web/rad with size NDIMR*NDIMZ.
+    // Prepare the interpolation object
     m_psi_values = psi;
-}
 
-void FLT::setFARR(std::vector<double> flux){
-    // Sets the poloidal flux points in Web/rad with size NDIMR.
-    m_flux_points = flux;
-}
-
-void FLT::setFPOL(std::vector<double> fpol){
-    // Sets the poloidal current values in m T with size NDIMR.
-    m_fpol_values = fpol;
-}
-
-
-void FLT::setShift(double rmove, double zmove){
-    // Sets the plasma shifts in units of m, m. The shift is applied when
-    // calling the interpolation method and is applied negatively as this is
-    // intended for the plasma shift.
-    m_r_move = rmove;
-    m_z_move = zmove;
-}
-
-bool FLT::prepareInterpolation(){
-    // Allocates and creates the interpolation objects.
+    // Throw exception if the dimensions of the arrays do not match.
+    if (r.size() * z.size() != psi.size()) throw std::logic_error("Provided arrays not of compatible sizes.");
 
     int n_rows, n_cols;
     std::vector<double> buffer;
@@ -86,7 +48,15 @@ bool FLT::prepareInterpolation(){
     }
 
     m_interp_psi->setArrays(m_r_points, m_z_points, m_reshaped_psi);
-    return true;
+    m_equilibrium_loaded = true;
+}
+
+void FLT::setShift(double rmove, double zmove){
+    // Sets the plasma shifts in units of m, m. The shift is applied when
+    // calling the interpolation method and is applied negatively as this is
+    // intended for the plasma shift.
+    m_r_move = rmove;
+    m_z_move = zmove;
 }
 
 void FLT::getBCyln(double r, double z, std::vector<double> &out){
@@ -190,18 +160,12 @@ void FLT::runFLT(){
     // hits anything in the shadowing geometry.
 
     int n_points = m_origin_points.size();
-    if (n_points == 0){
-        return;
-    }
+
+    if (n_points == 0) throw std::logic_error("No points to run FLT from");
+    if (!m_equilibrium_loaded) throw std::logic_error("No equilibrium loaded");
+
+    // Actual number of points is divided by three.
     n_points = n_points / 3;
-
-    // double n_points_check = n_points / 3.0;
-    // if (n_points != n_points_check){
-    //     // Raise error
-    //     return;
-    // }
-
-
     #pragma omp parallel num_threads(m_number_of_threads)
     {
         // Control options and values set by the user!!

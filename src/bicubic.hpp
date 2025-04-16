@@ -1,11 +1,26 @@
 #ifndef BICUBIC_H
 #define BICUBIC_H
 
+#if defined(_WIN32)
+    #ifdef flt_EXPORTS
+        #define BICUBIC_API __declspec(dllexport)
+    #else
+        #define BICUBIC_API __declspec(dllimport)
+    #endif
+#else
+    #ifdef flt_EXPORTS
+        #define BICUBIC_API __attribute__ ((visibility ("default")))
+    #else
+        #define BICUBIC_API
+    #endif
+#endif
+
 #include <vector>
 
 // BI_DATA struct is used for providing context when obtaining interpolation
 // values. Also more OpenMP friendly than plain shared class attributes.
-struct alignas(64) BI_DATA
+
+struct BICUBIC_API alignas(64) BI_DATA
 {
     double r=0;
     double z=0;
@@ -30,10 +45,10 @@ struct alignas(64) BI_DATA
 /// It acts as a context for each call request, reducing the number of OpenMP
 /// false-sharing that might happen if the variables in the struct were class
 /// attributes.
-class BICUBIC_INTERP
+class BICUBIC_API BICUBIC_INTERP
 {
 
-public:
+private:
     /// Rectilinear weights. Obtained from the input X- and Y-axis arrays and
     /// are needed when obtaining the partial derivatives.
     double m_dx=1.0, m_dy=1.0;
@@ -48,6 +63,14 @@ public:
     /// Size of the X- and Y-axis arrays.
     int m_nx, m_ny;
 
+    /// 1D vector that holds the constants. The Size is (Nx*Ny*16);
+    std::vector<double> m_a;
+
+public:
+
+    BICUBIC_INTERP(){};
+    ~BICUBIC_INTERP(){};
+
     /// 2D vectors for storing the discrete values of the function we wish to
     /// interpolate, the first partial derivatives and the mixed partial
     /// derivative.
@@ -55,11 +78,6 @@ public:
     std::vector<std::vector<double>> m_fdx;
     std::vector<std::vector<double>> m_fdy;
     std::vector<std::vector<double>> m_fdxdy;
-    /// 1D vector that holds the constants. The Size is (Nx*Ny*16);
-    std::vector<double> m_a;
-
-    BICUBIC_INTERP(){};
-    ~BICUBIC_INTERP(){};
 
     /// Function that takes the X-axis and Y-axis 1D arrays and the 2D array
     /// which we wish to interpolate. For the bicubic interpolation the first
@@ -67,6 +85,10 @@ public:
     /// derivative. This function obtains the derivative values by using higher
     /// finite difference table (combination of central, forward and backward,
     /// depending where are we.).
+    ///
+    /// WARNING! If you do not set the arrays or the input data, then the other
+    /// functions will cause a segfault.
+    ///
     /// @param[in] x is the X-axis 1D vector array of size Nx - Columns
     /// @param[in] y is the Y-axis 1D vector array of size Ny - Rows
     /// @param[in] f is the X-axis 2D vector array (vector of vectors) of size
@@ -77,7 +99,7 @@ public:
     /// Function that sets the constant values to a BI_DATA context. Used once
     /// on a BI_DATA construct after the setArrays was used and before calling
     /// gevValues.
-    void populateContext(BI_DATA *context){
+    void populateContext(BI_DATA *context) noexcept {
         context->dx = m_dx;
         context->dy = m_dy;
         context->minx = m_minx;
@@ -95,10 +117,10 @@ public:
     /// arguments and return values altogether. You need to set the BI_DATA->r,
     /// and BI_DATA->z and obtain the values in variables BI_DATA->val,
     /// BI_DATA->valdx and BI_DATA->valdy.
-    void getValues(BI_DATA *context);
+    void getValues(BI_DATA *context) noexcept;
     /// This function is similar to getValues, except that it returns the
     /// second derivative values on
-    void getSecondDerivativeValues(BI_DATA *context);
+    void getSecondDerivativeValues(BI_DATA *context) noexcept;
 
 };
 #endif /*BICUBIC_H*/

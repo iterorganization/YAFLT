@@ -37,6 +37,8 @@ foreach(target flt_static flt)
     target_link_libraries(${target} PUBLIC OpenMP::OpenMP_CXX)
 endforeach(target)
 
+set_target_properties(flt PROPERTIES CXX_VISIBILITY_PRESET hidden)
+
 # Add the headers to the PUBLIC_HEADER property so that they get installed.
 # set_target_properties(flt_static PROPERTIES PUBLIC_HEADER "${FLT_HEADERS}")
 # Rename the static library so that in the end we will have a flt.a and flt.so
