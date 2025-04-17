@@ -2,7 +2,9 @@
 #define FLT_H
 
 #if defined(_WIN32)
-    #ifdef flt_EXPORTS
+    #ifdef flt_STATIC
+        #define FLT_API
+    #elif flt_EXPORTS
         #define FLT_API __declspec(dllexport)
     #else
         #define FLT_API __declspec(dllimport)

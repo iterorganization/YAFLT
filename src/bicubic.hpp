@@ -2,7 +2,9 @@
 #define BICUBIC_H
 
 #if defined(_WIN32)
-    #ifdef flt_EXPORTS
+    #ifdef flt_STATIC
+        #define BICUBIC_API
+    #elif flt_EXPORTS
         #define BICUBIC_API __declspec(dllexport)
     #else
         #define BICUBIC_API __declspec(dllimport)

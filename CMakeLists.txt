@@ -32,7 +32,20 @@ foreach(p LIB BIN INCLUDE CMAKE)
 endforeach()
 
 if(MSVC)
-    add_compile_options("/W4" "$<$<CONFIG:RELEASE>:/O2>")
+    add_compile_options("/bigobj")
+    # Disable warnings
+    # - initializing conversion of double to float due to number literals are
+    #   considered double in MSVC
+    add_compile_options("/wd4305")
+    # - same but reverse
+    add_compile_options("/wd4244")
+    # - initializing conversion of int to size_t
+    add_compile_options("/wd4245")
+    # - same but reverse
+    add_compile_options("/wd4267")
+    # Useless warning about ABI incompatibility between different version
+    add_compile_options("/wd4251")
+
 else()
     add_compile_options("-Wall" "-Wextra" "$<$<CONFIG:RELEASE>:-O3>")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")

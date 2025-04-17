@@ -2,7 +2,9 @@
 #define RKF45_H
 
 #if defined(_WIN32)
-    #ifdef flt_EXPORTS
+    #ifdef flt_STATIC
+        #define RKF45_API
+    #elif flt_EXPORTS
         #define RKF45_API __declspec(dllexport)
     #else
         #define RKF45_API __declspec(dllimport)

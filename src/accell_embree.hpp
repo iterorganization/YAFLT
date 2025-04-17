@@ -2,7 +2,9 @@
 #define ACCELL_EMBREE_H
 
 #if defined(_WIN32)
-    #ifdef flt_EXPORTS
+    #ifdef flt_STATIC
+        #define ACCELL_EMBREE_API
+    #elif flt_EXPORTS
         #define ACCELL_EMBREE_API __declspec(dllexport)
     #else
         #define ACCELL_EMBREE_API __declspec(dllimport)

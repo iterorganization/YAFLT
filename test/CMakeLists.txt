@@ -31,4 +31,10 @@ foreach(target_src ${INTERPOLATION_TESTS} ${OBJECT_TESTS} ${RKF45_TESTS} ${EMBRE
     target_include_directories(${executable} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_include_directories(${executable} PRIVATE $<TARGET_PROPERTY:flt_static,INCLUDE_DIRECTORIES>)
     add_test(NAME "${category}/${target_name}" COMMAND $<TARGET_FILE:${executable}>)
+
+    if(MSVC)
+        # Increase the stack size as the eqdsk_drsep10_data.hpp triggers segfault
+        # with the default size.
+        set_target_properties(${executable} PROPERTIES LINK_FLAGS "/STACK:8388608")
+    endif()
 endforeach(target_src)
