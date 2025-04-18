@@ -42,7 +42,12 @@ magnetic surface or how much it differs from the initial flux value (should be
 constant). Of course the resolution of the input data affects the accuracy, 
 nonetheless, the method itself should have some control over it.
 
+Additionally there are two tests that contain the implementation of theRKF 4(5)
+method and seeing if it is suitable for tracing fieldlines.
+
  - test_stability.cpp
+ - test_rkf45_method.cpp
+ - test_rkf45_method_stability.cpp
 
 ## Creation and deletion of objects
 
@@ -57,3 +62,4 @@ This tests loading mesh data to Embree and checking if intersection tests work
 on a simple case.
 
  - test_intersection.cpp
+ - load_mesh.cpp
