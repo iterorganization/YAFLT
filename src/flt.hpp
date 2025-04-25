@@ -172,7 +172,7 @@ private:
     ///                 interpolation functions
     void fehl_step(double y[2], double h, double yp[2], double k2[2],
                    double k3[2], double k4[2], double k5[2], double k6[2],
-                   double s[2], BI_DATA *context);
+                   double s[2], BI_DATA *context) noexcept;
 
     /// Function that calculates the partial derivatives of the axis-symmetric
     /// non-time dependent PDE's for fieldlines in a Cylindrical coordinate
@@ -183,7 +183,7 @@ private:
     ///                 points (R, Z)
     /// @param[in, out] context is the struct necessary for running
     ///                 interpolation functions
-    void flt_pde(double y[2], double yp[2], BI_DATA *context);
+    void flt_pde(double y[2], double yp[2], BI_DATA *context) noexcept;
 
 public:
     FLT();
@@ -217,6 +217,7 @@ public:
     ///                configuration.
     void setPoloidalMagneticFlux(std::vector<double> r, std::vector<double> z,
                                  std::vector<double> psi);
+
     /// Sets the poloidal current value (Bt R) in vacuum. Units (m T)
     /// @param[in] vacuum_fpol is the F=Bt*R value in vacuum.
     void setVacuumFPOL(double vacuum_fpol){m_vacuum_fpol = vacuum_fpol;};
@@ -229,9 +230,11 @@ public:
     /// Sets the desired absolute error for the RKF45 solver
     /// @param[in] abserr is the RKF45 parameter for absolute accuracy.
     void setAbsError(double abserr){m_abserr = abserr;};
+
     /// Sets the desired relative error for the RKF45 solver
     /// @param[in] relerr is the RKF45 parameter for relative accuracy.
     void setRelError(double relerr){m_relerr = relerr;};
+
     /// Sets the desired toroidal angle step (the parametric time of the
     /// partial differential equations). Since the solver is an adaptive rkf45
     /// desired mean that at each time the solver tries to find the next
@@ -251,6 +254,7 @@ public:
     void setMaximumFieldlineLength(double max_fieldline_length){
         m_max_fieldline_length = max_fieldline_length;
     };
+
     /// Calculates the barycenter of a set of triangle points. Orientation is
     /// determined from the order of the ID list of a triangle. :
     ///                      p3 - - p2
@@ -261,6 +265,7 @@ public:
     /// @param[in] p2 is the second point of the triangle
     /// @param[in] p3 is the third point of the triangle
     void getBaryCenter(double p1[3], double p2[3], double p3[3]);
+
     /// Sets the self-intersection avoidance length in order to avoid getting
     /// false positive self intersection results. In meters.
     ///
@@ -323,7 +328,6 @@ public:
                 const int direction, std::vector<double>& storage,
                 const bool with_flt);
 
-
     /// For a given point in the (R, Z) space in units of (m, m)
     /// return the poloidal and toroidal component of the magnetic field.
     /// @param[in] r is the radial position of a point. In meters.
@@ -332,6 +336,7 @@ public:
     ///                     component of the magnetic field. The parameter out
     ///                     must be a vector of size 2.
     void getBCyln(double r, double z, std::vector<double> &out);
+
     /// For a given point in the (R, Z, Phi) space in units of (m, m, rad) return
     /// the magnetic field vector in Cartesian coordinate system. The values
     /// are written in the out variable.
@@ -342,22 +347,26 @@ public:
     ///                     Cartesian coordinate system. Out must be a vector
     ///                     of at least size 3.
     void getBCart(double r, double z, double phi, std::vector<double> &out);
+
     /// For a given point in the (R, Z) space in units of (m, m) return the
     /// poloidal current function in units of m T (Bt R).
     /// @returns fpol which is the value of the poloidal current function
     /// @param[in] r is the radial position. In meters.
     /// @param[in] z is the vertical position. In meters.
     double getFPol(double r, double z);
+
     /// Get's the Poloidal current function in vacuum
     /// @returns  the value of the poloidal current function in the vacuum. 
     ///           It is constant for whole vacuum.
     double getVacuumFPOL(){return m_vacuum_fpol;};
+
     /// For a given point in the (R, Z) space in units of (m, m) return the
     /// poloidal flux value in Webb/rad
     /// @returns flux which is the poloidal magnetic flux value
     /// @param[in] r is the radial position
     /// @param[in] z is the vertical position
     double getPoloidalFlux(double r, double z);
+
     /// Sets the pointer to the Embree object responsible for the tracing.
     /// @param[in] accellObj is the Embree accelerated structure used for
     ///                      performing the intersection tests.

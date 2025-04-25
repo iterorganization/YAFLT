@@ -16,7 +16,7 @@ EmbreeAccell::EmbreeAccell(bool initialize){
 
     /// The following variables are used when we want to run in serial embree
     /// functions and also used via Python for other purposes.
-    m_rayHit = RTCRayHit();
+    m_ray_hit = RTCRayHit();
 #if EMBREE_VERSION == 3
     m_rayContext = RTCIntersectContext();
     rtcInitIntersectContext(&m_rayContext);
@@ -183,38 +183,38 @@ void EmbreeAccell::castRay(RTCRayHit *ray){
 void EmbreeAccell::castRay(float ox, float oy, float oz, float dx, float dy, float dz,
                            double tnear, double tfar){
     if (m_is_empty) return;
-    m_rayHit.ray.org_x = ox;
-    m_rayHit.ray.org_y = oy;
-    m_rayHit.ray.org_z = oz;
-    m_rayHit.ray.dir_x = dx;
-    m_rayHit.ray.dir_y = dy;
-    m_rayHit.ray.dir_z = dz;
-    m_rayHit.ray.tnear = tnear;
-    m_rayHit.ray.tfar = tfar;
-    m_rayHit.ray.mask = -1;
-    m_rayHit.ray.flags = 0;
-    m_rayHit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-    m_rayHit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+    m_ray_hit.ray.org_x = ox;
+    m_ray_hit.ray.org_y = oy;
+    m_ray_hit.ray.org_z = oz;
+    m_ray_hit.ray.dir_x = dx;
+    m_ray_hit.ray.dir_y = dy;
+    m_ray_hit.ray.dir_z = dz;
+    m_ray_hit.ray.tnear = tnear;
+    m_ray_hit.ray.tfar = tfar;
+    m_ray_hit.ray.mask = -1;
+    m_ray_hit.ray.flags = 0;
+    m_ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
+    m_ray_hit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
 #if EMBREE_VERSION == 3
-    rtcIntersect1(m_scene, &m_rayContext, &m_rayHit);
+    rtcIntersect1(m_scene, &m_rayContext, &m_ray_hit);
 #elif EMBREE_VERSION == 4
-    rtcIntersect1(m_scene, &m_rayHit);
+    rtcIntersect1(m_scene, &m_ray_hit);
 #endif
 }
 
 bool EmbreeAccell::checkIfHit(){
-    if (m_rayHit.hit.geomID != RTC_INVALID_GEOMETRY_ID){
+    if (m_ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID){
         return true;
     }
     return false;
 }
 
 int EmbreeAccell::returnGeomId(){
-    return (int) m_rayHit.hit.geomID;
+    return (int) m_ray_hit.hit.geomID;
 }
 
 int EmbreeAccell::returnPrimId(){
     /// It makes no sense why the geomID in Embree documentation is called the
     /// primitive ID and the primID is called the geometry ID... Maybe typo.
-    return (int) m_rayHit.hit.primID;
+    return (int) m_ray_hit.hit.primID;
 }

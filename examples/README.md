@@ -10,8 +10,8 @@ The magnetic data is stored in the header files.
 
 flt1.cpp obtains points of a fieldline and outputs them in a VTK file. 
 
-flt2.cpp obtains a fieldline by followining it from the barycenter of a 
-triangle and outputing the points in a VTK file. 
+flt2.cpp obtains a fieldline by following it from the barycenter of a
+triangle and outputting the points in a VTK file.
 
 flt3.cpp is same as flt2, except that in this case, based on the input normals we
 correctly determine the direction we should follow the fieldlines.

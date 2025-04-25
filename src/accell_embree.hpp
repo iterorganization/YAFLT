@@ -37,8 +37,6 @@
 class ACCELL_EMBREE_API EmbreeAccell
 {
 private:
-
-
     /// Embree device that is the default factory for Embree objects.
     RTCDevice m_device;
     /// Scene into which we commit geometries.
@@ -56,11 +54,10 @@ private:
     bool m_is_empty = true;
     int m_number_of_commited_meshes = 0;
 
-
     /// Private variables for when we want to use Embree in Cython or other
     /// applications and do not want to have direct calls to Embree. Basically
     /// variables for wrapping Embree calls.
-    RTCRayHit m_rayHit;
+    RTCRayHit m_ray_hit;
 #if EMBREE_VERSION == 3
     RTCIntersectContext m_rayContext;
 #endif
@@ -134,18 +131,18 @@ public:
 
     /// Function that tells you if there is an intersection hit. Call this
     /// after caling castRay.
-    ///  @param[out] hit A boolean, true if a geometry was hit, false
-    ///                  otherwise.
+    /// @param[out] A boolean, true if a geometry was hit, false otherwise.
     bool checkIfHit();
+
     /// This function returns the geometry ID if an intersection hit occured.
-    /// @param[out] geomId An integer of the geometry that was hit. This
-    ///                    integer corresponds to the integer of the geometry
-    ///                    loaded with commitMesh
+    /// @param[out] An integer of the geometry that was hit. This integer
+    ///             corresponds to the integer of the geometry loaded with
+    ///             commitMesh
     int returnGeomId();
+
     /// This function returns the geometry ID if an intersection hit occured.
-    /// @param[out] primId An integer of the geometry that was hit. This
-    ///                    integer corresponds to the integer of the loaded
-    ///                    geometry
+    /// @param[out] An integer of the geometry that was hit. This integer
+    ///             corresponds to the integer of the loaded geometry
     int returnPrimId();
 };
 
