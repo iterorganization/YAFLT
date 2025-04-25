@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Options
 option(FLT_BUILD_EXAMPLES "Build examples" ON)
 option(FLT_BUILD_TESTS "Build tests" ON)
+option(FLT_LTO "Enable link time optimization" ON)
 
 # Offer the user the choice of overriding the installation directories
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
@@ -52,8 +53,12 @@ else()
         add_compile_options("-stdlib=libc++")
         add_link_options("-stdlib=libc++")
     else()
-        # nothing special for gcc at the moment
+        add_compile_options("-ftree-vectorize")
     endif()
+endif()
+
+if(FLT_LTO)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
 # set(CMAKE_VERBOSE_MAKEFILE ON)
