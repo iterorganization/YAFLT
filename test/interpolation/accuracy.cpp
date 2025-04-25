@@ -18,8 +18,8 @@ int main(){
     srand(time(NULL));
     BICUBIC_INTERP *obj = new BICUBIC_INTERP();
     BI_DATA *context = new BI_DATA();
-    int Nx = 50;
-    int Ny = 100;
+    int Nx = 35;
+    int Ny = 65;
     double Dx = 5.0/Nx;
     double Dy = 10.0/Ny;
 
@@ -126,11 +126,11 @@ int main(){
         }
     }
     double ratio=(double)counts/N;
-    // printf("Total tries: %d\n", N);
-    // printf("Number of high error points: %d (%.2f)\n", counts, ratio*100);
-    // printf("Maximum relative error f: %f\n", abs_max_f);
-    // printf("Maximum relative error fdx: %f\n", abs_max_fdx);
-    // printf("Maximum relative error fdy: %f\n", abs_max_fdy);
+    printf("Total tries: %d. ", N);
+    printf("Number of high error points: %d (%.2f %%)\n", counts, ratio*100);
+    printf("Maximum relative error f: %f\n", abs_max_f);
+    printf("Maximum relative error fdx: %f\n", abs_max_fdx);
+    printf("Maximum relative error fdy: %f\n", abs_max_fdy);
     // printf("Location %f %f\n", abs_max_r, abs_max_z);
     // printf("R goes from %f to %f\n", xmin, xmax);
     // printf("Z goes from %f to %f\n", ymin, ymax);

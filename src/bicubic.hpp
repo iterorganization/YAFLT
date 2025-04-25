@@ -31,6 +31,8 @@ struct BICUBIC_API BI_DATA
     double valdy=0;
     double dx=0.0;
     double dy=0.0;
+    double inv_dx=1.0;
+    double inv_dy=1.0;
     double minx=0.0;
     double miny=0.0;
     double maxx=0.0;
@@ -101,9 +103,14 @@ public:
     /// Function that sets the constant values to a BI_DATA context. Used once
     /// on a BI_DATA construct after the setArrays was used and before calling
     /// gevValues.
+    /// @param[in] context is the structure containing the information on the
+    ///                    interpolated data, as well as holding the input and
+    ///                    output variables for interpolation queries.
     void populateContext(BI_DATA *context) noexcept {
         context->dx = m_dx;
         context->dy = m_dy;
+        context->inv_dx = 1.0 / m_dx;
+        context->inv_dy = 1.0 / m_dy;
         context->minx = m_minx;
         context->miny = m_miny;
         context->nx = m_nx;
@@ -119,10 +126,21 @@ public:
     /// arguments and return values altogether. You need to set the BI_DATA->r,
     /// and BI_DATA->z and obtain the values in variables BI_DATA->val,
     /// BI_DATA->valdx and BI_DATA->valdy.
+    /// @param[in] context is the structure containing the information on the
+    ///                    interpolated data, as well as holding the input and
+    ///                    output variables for interpolation queries.
     void getValues(BI_DATA *context) noexcept;
-    /// This function is similar to getValues, except that it returns the
-    /// second derivative values on
-    void getSecondDerivativeValues(BI_DATA *context) noexcept;
 
+    /// Obtain first derivative values at (x, y)
+    /// @param[in] context is the structure containing the information on the
+    ///                    interpolated data, as well as holding the input and
+    ///                    output variables for interpolation queries.
+    void getFirstDerivativeValues(BI_DATA *context) noexcept;
+
+    /// Obtain secondary derivative values at (x, y)
+    /// @param[in] context is the structure containing the information on the
+    ///                    interpolated data, as well as holding the input and
+    ///                    output variables for interpolation queries.
+    void getSecondDerivativeValues(BI_DATA *context) noexcept;
 };
 #endif /*BICUBIC_H*/

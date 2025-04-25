@@ -59,7 +59,7 @@ void TEST_SOLVER::flt_pde(double y[2], double yp[2]){
 
     m_context->r = y[0];
     m_context->z = y[1];
-    m_interp_psi->getValues(m_context);
+    m_interp_psi->getFirstDerivativeValues(m_context);
     factor = y[0] / m_vacuum_fpol;
 
     yp[0] = -m_context->valdy * factor;

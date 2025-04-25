@@ -71,7 +71,7 @@ void FLT::getBCyln(double r, double z, std::vector<double> &out){
 
     ctx->r = r - m_r_move;
     ctx->z = z - m_z_move;
-    m_interp_psi->getValues(ctx);
+    m_interp_psi->getFirstDerivativeValues(ctx);
 
     out[0] = sqrt(ctx->valdx * ctx->valdx + ctx->valdy * ctx->valdy) / r;
     out[1] = m_vacuum_fpol / r; // Bphi
@@ -100,7 +100,7 @@ void FLT::getBCart(double r, double z, double phi, std::vector<double> &out){
 
     ctx->r = r - m_r_move;
     ctx->z = z - m_z_move;
-    m_interp_psi->getValues(ctx);
+    m_interp_psi->getFirstDerivativeValues(ctx);
 
     br = -ctx->valdy / r;
     bphi = m_vacuum_fpol / r;
@@ -787,7 +787,7 @@ inline void FLT::flt_pde(double y[2], double yp[2], BI_DATA *context) noexcept {
 
     context->r = y[0] - m_r_move;
     context->z = y[1] - m_z_move;
-    m_interp_psi->getValues(context);
+    m_interp_psi->getFirstDerivativeValues(context);
     factor = y[0] / m_vacuum_fpol;
 
     yp[0] = -context->valdy * factor;
