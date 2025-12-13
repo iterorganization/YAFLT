@@ -15,12 +15,12 @@ set(RKF45_TESTS
     rkf45/test_rkf45_method_stability.cpp
 )
 
-set(EMBREE_TESTS
-    embree/load_mesh.cpp
-    embree/test_intersection.cpp
+set(BVH_TESTS
+    bvh/load_mesh.cpp
+    bvh/test_intersection.cpp
 )
 
-foreach(target_src ${INTERPOLATION_TESTS} ${OBJECT_TESTS} ${RKF45_TESTS} ${EMBREE_TESTS})
+foreach(target_src ${INTERPOLATION_TESTS} ${OBJECT_TESTS} ${RKF45_TESTS} ${BVH_TESTS})
     get_filename_component(category ${target_src} DIRECTORY)
     get_filename_component(target_name ${target_src} NAME_WE) 
     set(executable ${category}_${target_name})

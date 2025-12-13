@@ -5,11 +5,12 @@ The src directory contains the whole source code that implements the fieldline
 tracing, interpolation and intersection testing algorithms.
 
 
-The code that contains that makes a thin specialized layer for intersection 
-tests on a triangular mesh via Embree is as following:
+The following code implements a TLAS (Top-Level-Accelerated-Structure)
+behavior, that can contain multiple BLAS (Bottom-Level-Accelerated-Structure)
+objects:
 
- - accell_embree.cpp
- - accell_embree.hpp
+ - tlas.cpp
+ - tlas.hpp
 
 The code that implements the bicubic spline interpolation method:
 

@@ -1,5 +1,4 @@
 /*Inres1 shadow data*/
-/*Simple arrays are used instead of vectors since Embree takes arrays as arguments.*/
 long int n_svec = 108438;
 float svec[108438] = {3.9744,  0.6873,  -1.5043,  3.9470,  0.6792,  -1.4950,
                       3.9608,  0.6814,  -1.0069,  3.9896,  0.6900,  -1.0061,

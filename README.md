@@ -17,15 +17,15 @@ Spline interpolation method is used.
 FLs are followed with the Runge-Kutta-Fehlberg Method (RKF45) method to ensure
 good precision and stability when traveling along a FL on a magnetic surface.
 
-Intersection tests on the FLs are performed by using the RayCast method from
-the high-performance ray tracing kernel Embree (https://embree.org).
+Intersection tests on the FLs are performed by using the Intersect method from
+the MIT licensed, single-header only tinybvh project
+(https://github.com/jbikker/tinybvh). See src/tiny_bvh.h for more information.
 
 
 ## Building the software
 
-In order to build the software the following dependencies are required:
+In order to build the software the following build dependencies are required:
 
- - Embre >= 3
  - CMake >= 3.12
  - OpenMP support
  - Doxygen (optional)
@@ -41,20 +41,15 @@ Windows:
  - Visual Studio 17 2022
  - Visual Studio CMake support
 
-
-Embree (https://github.com/RenderKit/embree) is a high-performance CPU ray 
-tracing kernel used for intersection testing. Both Embree 3 and 4 are 
-supported.
-
-Doxygen is optional. It is used for generating html version of the 
+Doxygen is optional. It is used for generating a html version of the
 documentation.
 
 Ninja is optional. It is used for building the software.
 
 ### Building with CMake
 
-Ensure that Embree and other dependencies can be found with CMake. Otherwise
-edit the CMAKE_PREFIX_PATH in order to point to the CMake directories of the
+Ensure that dependencies can be found with CMake. Otherwise edit the
+CMAKE_PREFIX_PATH in order to point to the CMake directories of the
 dependencies.
 
 ```bash

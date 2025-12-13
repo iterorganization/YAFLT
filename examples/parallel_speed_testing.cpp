@@ -5,8 +5,7 @@
 
 #include <cstdio>
 #include <flt.hpp>
-
-#include <accell_embree.hpp>
+#include <tlas.hpp>
 #include <data_for_spline.h>
 #include <data_for_shadow.h>
 #include <omp.h>
@@ -16,17 +15,17 @@ int main(){
 
     setbuf(stdout, NULL);
 
-    // Create the Embree object
-    EmbreeAccell *embreeObj = new EmbreeAccell();
+    // Create the TLAS object
+    TLAS *tlas = new TLAS();
 
     float* shadow_vertices = svec;
     unsigned int* shadow_triangles = stri;
-    embreeObj->commitMesh(shadow_vertices, n_svec, shadow_triangles, n_stri);
+    tlas->commitMesh(shadow_vertices, n_svec, shadow_triangles, n_stri);
     // Create the fieldline object
     FLT *obj = new FLT();
 
-    // Set the Embree object - It's empty but it's okay
-    obj->setEmbreeObj(embreeObj);
+    // Set the TLAS object
+    obj->setTLAS(tlas);
 
     // Load the EQDSK data - limiter equilibrium.
 
@@ -103,7 +102,7 @@ int main(){
     printf("Max (%d) core time: %f\n", 16, max_core_time);
     // printf("Speedup at %d cores: %f\n", MAX_CPUS, one_core_time / max_core_time);
 
-    delete embreeObj;
+    delete tlas;
     delete obj;
 
     return 0;

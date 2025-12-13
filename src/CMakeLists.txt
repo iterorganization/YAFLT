@@ -1,17 +1,10 @@
-# RKF45 dependency
-set(RKF45_SOURCES
-    rkf45.cpp
-)
-
-# Bicubic dependency
-set(BICUBIC_SOURCES
-    bicubic.cpp
-)
 
 # FLT main library
 set(FLT_SOURCES
     flt.cpp
-    accell_embree.cpp
+    tlas.cpp
+    bicubic.cpp
+    rkf45.cpp
 )
 
 # All the header files, which we install in the include directory of the
@@ -19,20 +12,17 @@ set(FLT_SOURCES
 set(FLT_HEADERS
     rkf45.hpp
     flt.hpp
-    accell_embree.hpp
+    tlas.hpp
     bicubic.hpp
+    tiny_bvh.h
     )
 
 # Create the static library and shared library
-add_library(flt_static STATIC 
-    ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
-add_library(flt SHARED 
-    ${BICUBIC_SOURCES} ${RKF45_SOURCES} ${FLT_SOURCES})
+add_library(flt_static STATIC ${FLT_SOURCES})
+add_library(flt SHARED  ${FLT_SOURCES})
 
-# Link embree and add include directories for dependencies.
+# Link and add include directories for dependencies.
 foreach(target flt_static flt)
-    target_link_libraries(${target} PUBLIC ${EMBREE_LIBRARY})
-    target_include_directories(${target} PUBLIC ${EMBREE_INCLUDE_DIRS})
     target_include_directories(${target} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
     target_link_libraries(${target} PUBLIC OpenMP::OpenMP_CXX)
 endforeach(target)

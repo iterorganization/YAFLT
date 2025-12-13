@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 option(FLT_BUILD_EXAMPLES "Build examples" ON)
 option(FLT_BUILD_TESTS "Build tests" ON)
 option(FLT_LTO "Enable link time optimization" ON)
+option(FLT_FMA "Enable FMA CPU extension (for tinybvh)" ON)
+option(FLT_AVX2 "Enable AVX2 CPU extension (for tinybvh)" ON)
 
 # Offer the user the choice of overriding the installation directories
 set(INSTALL_LIB_DIR lib CACHE PATH "Installation directory for libraries")
@@ -47,13 +49,24 @@ if(MSVC)
     # Useless warning about ABI incompatibility between different version
     add_compile_options("/wd4251")
 
+    if (FLT_AVX2)
+        add_compile_options("/arch:AVX512")
+    endif()
+
 else()
-    add_compile_options("-Wall" "-Wextra" "$<$<CONFIG:RELEASE>:-O3>")
+    add_compile_options("-Wall" "-Wextra" "$<$<CONFIG:RELEASE>:-O3>" "$<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>")
+    add_link_options("$<$<CONFIG:DEBUG>:-fsanitize=address>")
     if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         add_compile_options("-stdlib=libc++")
         add_link_options("-stdlib=libc++")
     else()
         add_compile_options("-ftree-vectorize")
+    endif()
+    if (FLT_FMA)
+        add_compile_options("-mfma")
+    endif()
+    if (FLT_AVX2)
+        add_compile_options("-mavx2")
     endif()
 endif()
 
@@ -62,12 +75,6 @@ if(FLT_LTO)
 endif()
 
 # set(CMAKE_VERBOSE_MAKEFILE ON)
-
-# 3rd party dependencies
-find_package(embree REQUIRED)
-# Set Embree MAJOR version
-set(FLT_COMPILE_DEFINITIONS "EMBREE_VERSION=${EMBREE_VERSION_MAJOR}")
-add_compile_definitions(${FLT_COMPILE_DEFINITIONS})
 
 find_package(OpenMP REQUIRED)
 # Optional for documentation generation

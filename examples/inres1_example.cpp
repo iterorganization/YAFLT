@@ -8,8 +8,7 @@
 #include <polylineWriter.cpp>
 
 #include <iostream> // std::cout
-
-#include <accell_embree.hpp>
+#include <tlas.hpp>
 #include <data_for_shadow.h>
 #include <data_for_spline.h>
 #include <data_for_target.h>
@@ -67,22 +66,22 @@ double angleBetweenVectors(std::vector<double> x1, std::vector<double> x2,
 
 int main(){
 
-    // Create and load the Embree object
-    EmbreeAccell *embreeObj = new EmbreeAccell();
+    // Create and load the TLAS object
+    TLAS *tlas = new TLAS();
     // Create pointers
 
     float* shadow_vertices = svec;
     unsigned int* shadow_triangles = stri;
 
     std::cout << "Loading shadow mesh... ";
-    embreeObj->commitMesh(shadow_vertices, n_svec, shadow_triangles, n_stri);
+    tlas->commitMesh(shadow_vertices, n_svec, shadow_triangles, n_stri);
     std::cout << "Done!" << std::endl;
 
     // Create the fieldline object
     FLT *obj = new FLT();
 
-    // Set the Embree object
-    obj->setEmbreeObj(embreeObj);
+    // Set the TLAS object
+    obj->setTLAS(tlas);
 
     // Load the EQDSK data
 
@@ -130,11 +129,11 @@ int main(){
     std::vector<double> points;
     std::vector<int> directions;
     for(int i = 0; i < nTriangle; i++){
-        std::cout << std::endl;
-        std::cout << "Triangle No. " << i << " has vertices:" << std::endl;
-        std::cout << "Vertex No. " << triv0[i] << ": {" << vx[triv0[i]-1] << " " << vy[triv0[i]-1] << " " << vz[triv0[i]-1] << "}" << std::endl;
-        std::cout << "Vertex No. " << triv1[i] << ": {" << vx[triv1[i]-1] << " " << vy[triv1[i]-1] << " " << vz[triv1[i]-1] << "}" << std::endl;
-        std::cout << "Vertex No. " << triv2[i] << ": {" << vx[triv2[i]-1] << " " << vy[triv2[i]-1] << " " << vz[triv2[i]-1] << "}" << std::endl;
+        // std::cout << std::endl;
+        // std::cout << "Triangle No. " << i << " has vertices:" << std::endl;
+        // std::cout << "Vertex No. " << triv0[i] << ": {" << vx[triv0[i]-1] << " " << vy[triv0[i]-1] << " " << vz[triv0[i]-1] << "}" << std::endl;
+        // std::cout << "Vertex No. " << triv1[i] << ": {" << vx[triv1[i]-1] << " " << vy[triv1[i]-1] << " " << vz[triv1[i]-1] << "}" << std::endl;
+        // std::cout << "Vertex No. " << triv2[i] << ": {" << vx[triv2[i]-1] << " " << vy[triv2[i]-1] << " " << vz[triv2[i]-1] << "}" << std::endl;
 
         p1[0] = vx[triv0[i]-1]; p1[1] = vy[triv0[i]-1]; p1[2] = vz[triv0[i]-1];
         p2[0] = vx[triv1[i]-1]; p2[1] = vy[triv1[i]-1]; p2[2] = vz[triv1[i]-1];
@@ -164,7 +163,7 @@ int main(){
         // But what if the normal of the triangle is facing the other direction?
         direction = (dot_product < 0.0) ? -direction : direction;
         directions.push_back(direction);
-        printf("i=%d br=%f bz=%f bphi=%f direction=%d\n", i, br, bz, bphi, direction);
+        // printf("i=%d br=%f bz=%f bphi=%f direction=%d\n", i, br, bz, bphi, direction);
     }
 
 
@@ -172,10 +171,11 @@ int main(){
     obj->setPoints(points);
 
     // Set number of threads
-    obj->setNumberOfThreads(16);
+    obj->setNumberOfThreads(1);
 
     // Run the FLT
     obj->runFLT();
+
 
     double fieldline_length=0.0;
     for(int i = 0; i < nTriangle; i++){
@@ -200,5 +200,7 @@ int main(){
     int nPoints = vx.size();
     writePolyData2VTK(nPoints, vx, vy, vz, nTriangle, triv0, triv1, triv2,
                       conlen, mask, "inres1.vtk");
+    delete obj;
+    delete tlas;
     return 0;
 }

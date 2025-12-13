@@ -56,9 +56,9 @@ a segfault is lurking somewhere).
 
  - create_and_delete_objects.cpp
 
-## Embree tests
+## BVH tests
 
-This tests loading mesh data to Embree and checking if intersection tests work 
+This tests loading mesh data to a TLAS and checking if intersection tests work
 on a simple case.
 
  - test_intersection.cpp

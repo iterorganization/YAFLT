@@ -32,7 +32,7 @@
 #include <bicubic.hpp>
 
 #include <cmath>
-#include <accell_embree.hpp>
+#include <tlas.hpp>
 #include <vector>
 
 /// Class that solves the FL equation to obtain FL segments and checking if
@@ -140,16 +140,11 @@ private:
     double m_r_move = 0.0;
     double m_z_move = 0.0;
 
-    /// Pointer to the EmbreeAccell objects which does the FieldLineTrace. Main
-    /// difference between RayTrace is that we use the method RayCast, which
-    /// traces finite rays.
+    /// Pointer to the TLAS object that loads tinybvh::BVH objects, used for
+    /// checking for intersection tests with any loaded geometry inside the
+    /// tlas.
 
-    EmbreeAccell* m_embree_obj;
-
-    /// This states if a embree object is set or loaded to the FLT class. Since
-    /// the FLT class does not handle the creation of Embree objects then this
-    /// is the way to check if m_embree_obj is a valid pointer
-    bool m_embree_obj_loaded=false;
+    TLAS* m_tlas;
 
     /// Boolean variable that tells us if magnetic data was loaded
     bool m_equilibrium_loaded=false;
@@ -190,7 +185,7 @@ public:
     ~FLT();
 
     /// Output vector. Resized when the origin points are specified. This one
-    /// contains geometry IDs which are >= 0 of stored geometries in embree
+    /// contains geometry IDs which are >= 0 of stored geometries in tlas
     /// object. -1 means that the particular fieldline reach its maximum
     /// fieldline length. -2 means that the fieldline left the defined
     /// computational area of the equilibrium grid (outside the min/max of [R,
@@ -198,7 +193,7 @@ public:
     std::vector<int> m_out_geom_hit_ids;
     /// Output vector. Resized when the origin points are specified. This one
     /// contains primite IDs which are >= 0 of triangles of a stored geometry
-    /// in the embree object. -1 means that the particular fieldline reached
+    /// in the tlas object. -1 means that the particular fieldline reached
     /// its maximum fieldline length. -2 means that the fieldline left the
     /// defined computational area of the equilibrium grid (outside the
     /// min/max of [R, Z])
@@ -367,10 +362,10 @@ public:
     /// @param[in] z is the vertical position
     double getPoloidalFlux(double r, double z);
 
-    /// Sets the pointer to the Embree object responsible for the tracing.
-    /// @param[in] accellObj is the Embree accelerated structure used for
+    /// Sets the pointer to the TLAS object responsible for the tracing.
+    /// @param[in] tlas_obj is the TLAS accelerated structure used for
     ///                      performing the intersection tests.
-    void setEmbreeObj(EmbreeAccell* accellObj);
+    void setTLAS(TLAS* tlas_obj);
 };
 
 #endif //FLT_H

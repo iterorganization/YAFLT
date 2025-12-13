@@ -1,5 +1,5 @@
 #include <bicubic.hpp>
-#include <accell_embree.hpp>
+#include <tlas.hpp>
 #include <cstdio>
 #include <flt.hpp>
 #include <rkf45.hpp>
@@ -8,18 +8,18 @@
 
 int main(){
 
-    EmbreeAccell *embree_obj;
+    TLAS *tlas_obj;
     FLT *flt_obj;
     BICUBIC_INTERP *bicubic_obj;
 
     int N = 10;
     for (int i = 0; i < N; ++i)
     {
-        embree_obj = new EmbreeAccell();
+        tlas_obj = new TLAS();
         flt_obj = new FLT();
         bicubic_obj = new BICUBIC_INTERP();
 
-        delete embree_obj;
+        delete tlas_obj;
         delete flt_obj;
         delete bicubic_obj;
     }

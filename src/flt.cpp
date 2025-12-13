@@ -1,3 +1,4 @@
+#include <climits>
 #include <flt.hpp>
 
 // STD includes
@@ -130,10 +131,9 @@ double FLT::getPoloidalFlux(double r, double z){
     return out;
 }
 
-void FLT::setEmbreeObj(EmbreeAccell* accellObj){
+void FLT::setTLAS(TLAS* tlas_obj){
     // Set the RayTrace pointer to the class
-    m_embree_obj = accellObj;
-    m_embree_obj_loaded = true;
+    m_tlas = tlas_obj;
 }
 
 
@@ -155,14 +155,15 @@ void FLT::setPoints(std::vector<double> origin_points){
 }
 
 void FLT::runFLT(){
-    // This function follows a fieldline from the set initial start and uses
-    // the provided m_embree_obj embree structure which checks if the FL
-    // hits anything in the shadowing geometry.
+    // This function performs fieldline trace by following fieldlines backwards
+    // from target and checks how long it takes for a fieldline to intersect
+    // loaded geometries inside TLAS.
 
     int n_points = m_origin_points.size();
 
     if (n_points == 0) throw std::logic_error("No points to run FLT from");
     if (!m_equilibrium_loaded) throw std::logic_error("No equilibrium loaded");
+    if (m_tlas->isEmpty()) throw std::logic_error("No geometry loaded into TLAS");
 
     // Actual number of points is divided by three.
     n_points = n_points / 3;
@@ -212,12 +213,8 @@ void FLT::runFLT(){
         double error_eot;
         double error_tolerance;
 
-        // Embree constructs
-        RTCRayHit ray_hit = RTCRayHit();
-#if EMBREE_VERSION == 3
-        RTCIntersectContext ray_context = RTCIntersectContext();
-        rtcInitIntersectContext(&ray_context);
-#endif
+        // For ray tracing
+        tinybvh::Ray ray = tinybvh::Ray();
         // Ray tracing variables that are put into the RTCRayHit struct.
         double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
         // y[2] and yp[2] correspond to (R, Z) and value of the derivative of the
@@ -392,24 +389,18 @@ void FLT::runFLT(){
                 dt = t_step * direction;
 
                 // Prepare the struct for RayTracing
-                ray_hit.ray.org_x = ox;
-                ray_hit.ray.org_y = oy;
-                ray_hit.ray.org_z = oz;
-                ray_hit.ray.dir_x = dx;
-                ray_hit.ray.dir_y = dy;
-                ray_hit.ray.dir_z = dz;
-                ray_hit.ray.tnear = 0.0; // Segment going from origin point
-                ray_hit.ray.tfar = norm; // and is of length norm in (dx, dy,
-                ray_hit.ray.mask = -1;   // dz) direction
-                ray_hit.ray.flags = 0;
-                ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-                ray_hit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
-#if EMBREE_VERSION == 3
-                m_embree_obj->castRay(&ray_hit, &ray_context);
-#elif EMBREE_VERSION == 4
-                m_embree_obj->castRay(&ray_hit);
-#endif
-                if (ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+                ray.O.x = ox;
+                ray.O.y = oy;
+                ray.O.z = oz;
+                ray.D.x = dx;
+                ray.D.y = dy;
+                ray.D.z = dz;
+                ray.hit.t = norm;
+                ray.hit.inst = UINT_MAX;
+                ray.hit.prim = UINT_MAX;
+
+                m_tlas->castRay(&ray);
+                if (ray.hit.inst != UINT_MAX) {
                     intersect=true;
                 }
 
@@ -425,8 +416,8 @@ void FLT::runFLT(){
             // Register which geometry was hit.
             if (intersect){
                 if (!left_computational_domain){
-                    m_out_geom_hit_ids[i] = ray_hit.hit.geomID;
-                    m_out_prim_hit_ids[i] = ray_hit.hit.primID;
+                    m_out_geom_hit_ids[i] = ray.hit.inst;
+                    m_out_prim_hit_ids[i] = ray.hit.prim;
                 }
                 else {
                     m_out_geom_hit_ids[i] = -2;
@@ -569,12 +560,8 @@ void FLT::getFL(const double r, const double z, const double phi,
     double error_eot;
     double error_tolerance;
 
-    // Embree constructs
-    RTCRayHit ray_hit = RTCRayHit();
-#if EMBREE_VERSION == 3
-    RTCIntersectContext ray_context = RTCIntersectContext();
-    rtcInitIntersectContext(&ray_context);
-#endif
+    // For ray tracing
+    tinybvh::Ray ray = tinybvh::Ray();
 
     // Ray tracing variables that are put into the RTCRayHit struct.
     double ox, oy, oz, x1, y1, z1, norm, dx, dy, dz;
@@ -730,9 +717,9 @@ void FLT::getFL(const double r, const double z, const double phi,
         dz = dz / norm;
         // Set the original point of the ray into the struct here even if do
         // not need FLT.
-        ray_hit.ray.org_x = ox;
-        ray_hit.ray.org_y = oy;
-        ray_hit.ray.org_z = oz;
+        ray.O.x = ox;
+        ray.O.y = oy;
+        ray.O.z = oz;
 
         // Instead of re-calculating the starting point of a FL, assign the end
         // point from the current FL segment as the start point of the next
@@ -758,25 +745,15 @@ void FLT::getFL(const double r, const double z, const double phi,
         }
 
         // Prepare the struct for RayTracing
-        ray_hit.ray.dir_x = dx;
-        ray_hit.ray.dir_y = dy;
-        ray_hit.ray.dir_z = dz;
-        ray_hit.ray.tnear = 0.0;
-        ray_hit.ray.tfar = norm;
-        ray_hit.ray.mask = -1;
-        ray_hit.ray.flags = 0;
-        ray_hit.hit.geomID = RTC_INVALID_GEOMETRY_ID;
-        ray_hit.hit.instID[0] = RTC_INVALID_GEOMETRY_ID;
+        ray.D.x = dx;
+        ray.D.y = dy;
+        ray.D.z = dz;
+        ray.hit.t = norm;
 
-#if EMBREE_VERSION == 3
-        m_embree_obj->castRay(&ray_hit, &ray_context);
-#elif EMBREE_VERSION == 4
-        m_embree_obj->castRay(&ray_hit);
-#endif
-        if (ray_hit.hit.geomID != RTC_INVALID_GEOMETRY_ID) {
+        m_tlas->castRay(&ray);
+        if (ray.hit.inst != UINT_MAX) {
             intersect=true;
         }
-
 
     } // END WHILE LOOP. EITHER INRESECTION OR MAX LENGTH ACCHIEVED
     delete interp_context;
