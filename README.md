@@ -38,7 +38,7 @@ Linux:
 
 Windows:
 
- - Visual Studio 17 2022
+ - Visual Studio 17 2022 (use the x64 Native Tools Command Prompt)
  - Visual Studio CMake support
 
 Doxygen is optional. It is used for generating a html version of the

@@ -50,7 +50,7 @@ if(MSVC)
     add_compile_options("/wd4251")
 
     if (FLT_AVX2)
-        add_compile_options("/arch:AVX512")
+        add_compile_options("/arch:AVX2")
     endif()
 
 else()

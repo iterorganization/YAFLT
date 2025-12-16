@@ -41,6 +41,12 @@ private:
     tinybvh::BVH m_tlas;
     std::vector<BLAS> m_blases;
 
+    TLAS(const TLAS&) = delete;
+    TLAS& operator=(const TLAS&) = delete;
+
+    TLAS(TLAS&&) = default;
+    TLAS& operator=(TLAS&&) = default;
+
     /// Not used for storage but for building TLAS.
     std::vector<tinybvh::BLASInstance> m_instances;
     std::vector<tinybvh::BVHBase*> m_bvhs_ptrs; // For C-stype **ptr
